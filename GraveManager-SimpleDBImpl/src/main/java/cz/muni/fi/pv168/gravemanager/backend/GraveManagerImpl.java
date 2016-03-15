@@ -3,8 +3,6 @@ package cz.muni.fi.pv168.gravemanager.backend;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * This class implements {@link GraveManager}.
@@ -12,8 +10,6 @@ import java.util.logging.Logger;
  * @author petr.adamek@bilysklep.cz
  */
 public class GraveManagerImpl implements GraveManager {
-
-    public static final Logger logger = Logger.getLogger(GraveManagerImpl.class.getName());
 
     public GraveManagerImpl(Connection conn) {
         this.conn = conn;
@@ -43,11 +39,10 @@ public class GraveManagerImpl implements GraveManager {
             throw new IllegalArgumentException("grave column is negative number");
         }
 
-        PreparedStatement st = null;
-        try {
-            st = conn.prepareStatement(
-                    "INSERT INTO GRAVE (col,row,capacity,note) VALUES (?,?,?,?)",
-                    Statement.RETURN_GENERATED_KEYS);
+        try (PreparedStatement st = conn.prepareStatement(
+                "INSERT INTO GRAVE (col,row,capacity,note) VALUES (?,?,?,?)",
+                Statement.RETURN_GENERATED_KEYS)) {
+
             st.setInt(1, grave.getColumn());
             st.setInt(2, grave.getRow());
             st.setInt(3, grave.getCapacity());
@@ -63,14 +58,6 @@ public class GraveManagerImpl implements GraveManager {
 
         } catch (SQLException ex) {
             throw new ServiceFailureException("Error when inserting grave " + grave, ex);
-        } finally {
-            if (st != null) {
-                try {
-                    st.close();
-                } catch (SQLException ex) {
-                    logger.log(Level.SEVERE, null, ex);
-                }
-            }
         }
     }
 
@@ -97,10 +84,8 @@ public class GraveManagerImpl implements GraveManager {
 
     @Override
     public Grave getGrave(Long id) throws ServiceFailureException {
-        PreparedStatement st = null;
-        try {
-            st = conn.prepareStatement(
-                    "SELECT id,col,row,capacity,note FROM grave WHERE id = ?");
+        try (PreparedStatement st = conn.prepareStatement(
+                "SELECT id,col,row,capacity,note FROM grave WHERE id = ?")) {
             st.setLong(1, id);
             ResultSet rs = st.executeQuery();
 
@@ -121,14 +106,6 @@ public class GraveManagerImpl implements GraveManager {
         } catch (SQLException ex) {
             throw new ServiceFailureException(
                     "Error when retrieving grave with id " + id, ex);
-        } finally {
-            if (st != null) {
-                try {
-                    st.close();
-                } catch (SQLException ex) {
-                    logger.log(Level.SEVERE, null, ex);
-                }
-            }
         }
     }
 
@@ -154,10 +131,8 @@ public class GraveManagerImpl implements GraveManager {
 
     @Override
     public List<Grave> findAllGraves() throws ServiceFailureException {
-        PreparedStatement st = null;
-        try {
-            st = conn.prepareStatement(
-                    "SELECT id,col,row,capacity,note FROM grave");
+        try (PreparedStatement st = conn.prepareStatement(
+                "SELECT id,col,row,capacity,note FROM grave")) {
             ResultSet rs = st.executeQuery();
 
             List<Grave> result = new ArrayList<Grave>();
@@ -169,14 +144,6 @@ public class GraveManagerImpl implements GraveManager {
         } catch (SQLException ex) {
             throw new ServiceFailureException(
                     "Error when retrieving all graves", ex);
-        } finally {
-            if (st != null) {
-                try {
-                    st.close();
-                } catch (SQLException ex) {
-                    logger.log(Level.SEVERE, null, ex);
-                }
-            }
         }
     }
 
