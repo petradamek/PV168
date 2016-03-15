@@ -6,7 +6,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.sql.SQLException;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import static org.junit.Assert.*;
 
@@ -18,6 +20,10 @@ import static org.junit.Assert.*;
 public class GraveManagerImplTest {
 
     private GraveManagerImpl manager;
+
+    @Rule
+    // attribute annotated with @Rule annotation must be public :-(
+    public ExpectedException expectedException = ExpectedException.none();
 
     @Before
     public void setUp() throws SQLException {
@@ -38,22 +44,7 @@ public class GraveManagerImplTest {
     }
 
     @Test
-    public void getContact() {
-
-        assertNull(manager.getGrave(1l));
-
-        Grave grave = newGrave(12, 13, 6, "Nice grave");
-        manager.createGrave(grave);
-        Long graveId = grave.getId();
-
-        Grave result = manager.getGrave(graveId);
-        assertEquals(grave, result);
-        assertDeepEquals(grave, result);
-    }
-
-    @Test
-    public void getAllContacts() {
-
+    public void getAllGraves() {
         assertTrue(manager.findAllGraves().isEmpty());
 
         Grave g1 = newGrave(23, 44, 5, "Grave 1");
@@ -72,82 +63,78 @@ public class GraveManagerImplTest {
         assertDeepEquals(expected, actual);
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void createNullGrave() {
+        manager.createGrave(null);
+    }
+
     @Test
-    public void addContactWithWrongAttributes() {
-
-        try {
-            manager.createGrave(null);
-            fail();
-        } catch (IllegalArgumentException ex) {
-            //OK
-        }
-
+    public void createGraveWithExistingId() {
         Grave grave = newGrave(12, 13, 6, "Nice grave");
         grave.setId(1l);
-        try {
-            manager.createGrave(grave);
-            fail();
-        } catch (IllegalArgumentException ex) {
-            //OK
-        }
+        expectedException.expect(IllegalArgumentException.class);
+        manager.createGrave(grave);
+    }
 
-        grave = newGrave(-1, 13, 6, "Nice grave");
-        try {
-            manager.createGrave(grave);
-            fail();
-        } catch (IllegalArgumentException ex) {
-            //OK
-        }
+    @Test
+    public void createGraveWithNegativeColumn() {
+        Grave grave = newGrave(-1, 13, 6, "Nice grave");
+        expectedException.expect(IllegalArgumentException.class);
+        manager.createGrave(grave);
+    }
 
-        grave = newGrave(1, -1, 6, "Nice grave");
-        try {
-            manager.createGrave(grave);
-            fail();
-        } catch (IllegalArgumentException ex) {
-            //OK
-        }
+    @Test
+    public void createGraveWithNegativeRow() {
+        Grave grave = newGrave(1, -1, 6, "Nice grave");
+        expectedException.expect(IllegalArgumentException.class);
+        manager.createGrave(grave);
+    }
 
-        grave = newGrave(1, 1, -1, "Nice grave");
-        try {
-            manager.createGrave(grave);
-            fail();
-        } catch (IllegalArgumentException ex) {
-            //OK
-        }
+    @Test
+    public void createGraveWithNegativeCapacity() {
+        Grave grave = newGrave(1, 1, -1, "Nice grave");
+        expectedException.expect(IllegalArgumentException.class);
+        manager.createGrave(grave);
+    }
 
-        grave = newGrave(1, 1, 0, "Nice grave");
-        try {
-            manager.createGrave(grave);
-            fail();
-        } catch (IllegalArgumentException ex) {
-            //OK
-        }
+    @Test
+    public void createGraveWithZeroCapacity() {
+        Grave grave = newGrave(1, 1, 0, "Nice grave");
+        expectedException.expect(IllegalArgumentException.class);
+        manager.createGrave(grave);
+    }
 
-        // these variants should be ok
-        grave = newGrave(0, 13, 6, "Nice grave");
+    @Test
+    public void createGraveWithZeroColumn() {
+        Grave grave = newGrave(0, 13, 6, "Nice grave");
         manager.createGrave(grave);
         Grave result = manager.getGrave(grave.getId());
         assertNotNull(result);
+    }
 
-        grave = newGrave(12, 0, 6, "Nice grave");
+    @Test
+    public void createGraveWithZeroRow() {
+        Grave grave = newGrave(12, 0, 6, "Nice grave");
         manager.createGrave(grave);
-        result = manager.getGrave(grave.getId());
+        Grave result = manager.getGrave(grave.getId());
         assertNotNull(result);
+    }
 
-        grave = newGrave(12, 11, 6, null);
+    @Test
+    public void createGraveWithNullNote() {
+        Grave grave = newGrave(12, 11, 6, null);
         manager.createGrave(grave);
-        result = manager.getGrave(grave.getId());
+        Grave result = manager.getGrave(grave.getId());
         assertNotNull(result);
         assertNull(result.getNote());
-
     }
 
     @Test
     public void updateGrave() {
         Grave grave = newGrave(12, 13, 6, "Nice grave");
-        Grave g2 = newGrave(18, 19, 100, "Another record");
+        Grave anotherGrave = newGrave(18, 19, 100, "Another grave");
         manager.createGrave(grave);
-        manager.createGrave(g2);
+        manager.createGrave(anotherGrave);
         Long graveId = grave.getId();
 
         grave = manager.getGrave(graveId);
@@ -175,12 +162,12 @@ public class GraveManagerImplTest {
         assertEquals("Nice grave", grave.getNote());
 
         grave = manager.getGrave(graveId);
-        grave.setNote("Another grave");
+        grave.setNote("Not so nice grave");
         manager.updateGrave(grave);
         assertEquals(0, grave.getColumn());
         assertEquals(0, grave.getRow());
         assertEquals(1, grave.getCapacity());
-        assertEquals("Another grave", grave.getNote());
+        assertEquals("Not so nice grave", grave.getNote());
 
         grave = manager.getGrave(graveId);
         grave.setNote(null);
@@ -191,76 +178,66 @@ public class GraveManagerImplTest {
         assertNull(grave.getNote());
 
         // Check if updates didn't affected other records
-        assertDeepEquals(g2, manager.getGrave(g2.getId()));
+        assertDeepEquals(anotherGrave, manager.getGrave(anotherGrave.getId()));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void updateNullGrave() {
+        manager.updateGrave(null);
     }
 
     @Test
-    public void updateGraveWithWrongAttributes() {
-
+    public void updateGraveWithNullId() {
         Grave grave = newGrave(12, 13, 6, "Nice grave");
         manager.createGrave(grave);
-        Long graveId = grave.getId();
+        grave.setId(null);
+        expectedException.expect(IllegalArgumentException.class);
+        manager.updateGrave(grave);
+    }
 
-        try {
-            manager.updateGrave(null);
-            fail();
-        } catch (IllegalArgumentException ex) {
-            //OK
-        }
+    @Test
+    public void updateGraveWithNonExistingId() {
+        Grave grave = newGrave(12, 13, 6, "Nice grave");
+        manager.createGrave(grave);
+        grave.setId(grave.getId() + 1);
+        expectedException.expect(IllegalArgumentException.class);
+        manager.updateGrave(grave);
+    }
 
-        try {
-            grave = manager.getGrave(graveId);
-            grave.setId(null);
-            manager.updateGrave(grave);
-            fail();
-        } catch (IllegalArgumentException ex) {
-            //OK
-        }
+    @Test
+    public void updateGraveWithNegativeColumn() {
+        Grave grave = newGrave(12, 13, 6, "Nice grave");
+        manager.createGrave(grave);
+        grave.setColumn(-1);
+        expectedException.expect(IllegalArgumentException.class);
+        manager.updateGrave(grave);
+    }
 
-        try {
-            grave = manager.getGrave(graveId);
-            grave.setId(graveId - 1);
-            manager.updateGrave(grave);
-            fail();
-        } catch (IllegalArgumentException ex) {
-            //OK
-        }
+    @Test
+    public void updateGraveWithNegativeRow() {
+        Grave grave = newGrave(12, 13, 6, "Nice grave");
+        manager.createGrave(grave);
+        grave.setRow(-1);
+        expectedException.expect(IllegalArgumentException.class);
+        manager.updateGrave(grave);
+    }
 
-        try {
-            grave = manager.getGrave(graveId);
-            grave.setColumn(-1);
-            manager.updateGrave(grave);
-            fail();
-        } catch (IllegalArgumentException ex) {
-            //OK
-        }
+    @Test
+    public void updateGraveWithZeroCapacity() {
+        Grave grave = newGrave(12, 13, 6, "Nice grave");
+        manager.createGrave(grave);
+        grave.setCapacity(0);
+        expectedException.expect(IllegalArgumentException.class);
+        manager.updateGrave(grave);
+    }
 
-        try {
-            grave = manager.getGrave(graveId);
-            grave.setRow(-1);
-            manager.updateGrave(grave);
-            fail();
-        } catch (IllegalArgumentException ex) {
-            //OK
-        }
-
-        try {
-            grave = manager.getGrave(graveId);
-            grave.setCapacity(0);
-            manager.updateGrave(grave);
-            fail();
-        } catch (IllegalArgumentException ex) {
-            //OK
-        }
-
-        try {
-            grave = manager.getGrave(graveId);
-            grave.setCapacity(-1);
-            manager.updateGrave(grave);
-            fail();
-        } catch (IllegalArgumentException ex) {
-            //OK
-        }
+    @Test
+    public void updateGraveWithNegativeCapacity() {
+        Grave grave = newGrave(12, 13, 6, "Nice grave");
+        manager.createGrave(grave);
+        grave.setCapacity(-1);
+        expectedException.expect(IllegalArgumentException.class);
+        manager.updateGrave(grave);
     }
 
     @Test
@@ -281,34 +258,25 @@ public class GraveManagerImplTest {
 
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void deleteNullGrave() {
+        manager.deleteGrave(null);
+    }
+
     @Test
-    public void deleteGraveWithWrongAttributes() {
-
+    public void deleteGraveWithNullId() {
         Grave grave = newGrave(12, 13, 6, "Nice grave");
+        grave.setId(null);
+        expectedException.expect(IllegalArgumentException.class);
+        manager.deleteGrave(grave);
+    }
 
-        try {
-            manager.deleteGrave(null);
-            fail();
-        } catch (IllegalArgumentException ex) {
-            //OK
-        }
-
-        try {
-            grave.setId(null);
-            manager.deleteGrave(grave);
-            fail();
-        } catch (IllegalArgumentException ex) {
-            //OK
-        }
-
-        try {
-            grave.setId(1l);
-            manager.deleteGrave(grave);
-            fail();
-        } catch (IllegalArgumentException ex) {
-            //OK
-        }
-
+    @Test
+    public void deleteGraveWithNonExistingId() {
+        Grave grave = newGrave(12, 13, 6, "Nice grave");
+        grave.setId(1L);
+        expectedException.expect(IllegalArgumentException.class);
+        manager.deleteGrave(grave);
     }
 
     private static Grave newGrave(int column, int row, int capacity, String note) {
