@@ -3,6 +3,7 @@ package cz.muni.fi.pv168.gravemanager.backend;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import javax.sql.DataSource;
 
 /**
  * This class implements {@link GraveManager}.
@@ -11,14 +12,11 @@ import java.util.List;
  */
 public class GraveManagerImpl implements GraveManager {
 
-    public GraveManagerImpl(Connection conn) {
-        this.conn = conn;
-    }
+    private final DataSource dataSource;
 
-    // POZOR! Toto je jenom jednoducha ukazka, ktera neni vlaknove bezpecna a
-    // neresi transakce. Spravne reseni s transakcemi a pouzitim DataSource
-    // bude v prikladu k dalsi uloze
-    private Connection conn;
+    public GraveManagerImpl(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
 
     @Override
     public void createGrave(Grave grave) throws ServiceFailureException {
@@ -39,9 +37,11 @@ public class GraveManagerImpl implements GraveManager {
             throw new IllegalArgumentException("grave column is negative number");
         }
 
-        try (PreparedStatement st = conn.prepareStatement(
-                "INSERT INTO GRAVE (col,row,capacity,note) VALUES (?,?,?,?)",
-                Statement.RETURN_GENERATED_KEYS)) {
+        try (
+                Connection connection = dataSource.getConnection();
+                PreparedStatement st = connection.prepareStatement(
+                        "INSERT INTO GRAVE (col,row,capacity,note) VALUES (?,?,?,?)",
+                        Statement.RETURN_GENERATED_KEYS)) {
 
             st.setInt(1, grave.getColumn());
             st.setInt(2, grave.getRow());
@@ -84,8 +84,11 @@ public class GraveManagerImpl implements GraveManager {
 
     @Override
     public Grave getGrave(Long id) throws ServiceFailureException {
-        try (PreparedStatement st = conn.prepareStatement(
-                "SELECT id,col,row,capacity,note FROM grave WHERE id = ?")) {
+        try (
+                Connection connection = dataSource.getConnection();
+                PreparedStatement st = connection.prepareStatement(
+                        "SELECT id,col,row,capacity,note FROM grave WHERE id = ?")) {
+
             st.setLong(1, id);
             ResultSet rs = st.executeQuery();
 
@@ -131,8 +134,11 @@ public class GraveManagerImpl implements GraveManager {
 
     @Override
     public List<Grave> findAllGraves() throws ServiceFailureException {
-        try (PreparedStatement st = conn.prepareStatement(
-                "SELECT id,col,row,capacity,note FROM grave")) {
+        try (
+                Connection connection = dataSource.getConnection();
+                PreparedStatement st = connection.prepareStatement(
+                        "SELECT id,col,row,capacity,note FROM grave")) {
+
             ResultSet rs = st.executeQuery();
 
             List<Grave> result = new ArrayList<Grave>();

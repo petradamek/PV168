@@ -1,12 +1,13 @@
 package cz.muni.fi.pv168.gravemanager.backend;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.sql.SQLException;
+import javax.sql.DataSource;
+import org.apache.derby.jdbc.EmbeddedDataSource;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -23,7 +24,7 @@ import static org.junit.Assert.*;
 public class GraveManagerImplTest {
 
     private GraveManagerImpl manager;
-    private Connection conn;
+    private DataSource dataSource;
 
     @Rule
     // attribute annotated with @Rule annotation must be public :-(
@@ -31,20 +32,31 @@ public class GraveManagerImplTest {
 
     @Before
     public void setUp() throws SQLException {
-        conn = DriverManager.getConnection("jdbc:derby:memory:GraveManagerTest;create=true");
-        conn.prepareStatement("CREATE TABLE GRAVE ("
-                + "id bigint primary key generated always as identity,"
-                + "col int,"
-                + "row int,"
-                + "capacity int not null,"
-                + "note varchar(255))").executeUpdate();
-        manager = new GraveManagerImpl(conn);
+        dataSource = prepareDataSource();
+        try (Connection connection = dataSource.getConnection()) {
+            connection.prepareStatement("CREATE TABLE GRAVE ("
+                    + "id bigint primary key generated always as identity,"
+                    + "col int,"
+                    + "row int,"
+                    + "capacity int not null,"
+                    + "note varchar(255))").executeUpdate();
+        }
+        manager = new GraveManagerImpl(dataSource);
     }
 
     @After
     public void tearDown() throws SQLException {
-        conn.prepareStatement("DROP TABLE GRAVE").executeUpdate();
-        conn.close();
+        try (Connection connection = dataSource.getConnection()) {
+            connection.prepareStatement("DROP TABLE GRAVE").executeUpdate();
+        }
+    }
+
+    private static DataSource prepareDataSource() throws SQLException {
+        EmbeddedDataSource ds = new EmbeddedDataSource();
+        //we will use in memory database
+        ds.setDatabaseName("memory:gravemgr-test");
+        ds.setCreateDatabase("create");
+        return ds;
     }
 
     @Test
