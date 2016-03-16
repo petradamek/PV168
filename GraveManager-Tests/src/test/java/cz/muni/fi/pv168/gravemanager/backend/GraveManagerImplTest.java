@@ -200,7 +200,7 @@ public class GraveManagerImplTest {
         Grave grave = newGrave(12, 13, 6, "Nice grave");
         manager.createGrave(grave);
         grave.setId(grave.getId() + 1);
-        expectedException.expect(IllegalArgumentException.class);
+        expectedException.expect(EntityNotFoundException.class);
         manager.updateGrave(grave);
     }
 
@@ -275,7 +275,7 @@ public class GraveManagerImplTest {
     public void deleteGraveWithNonExistingId() {
         Grave grave = newGrave(12, 13, 6, "Nice grave");
         grave.setId(1L);
-        expectedException.expect(IllegalArgumentException.class);
+        expectedException.expect(EntityNotFoundException.class);
         manager.deleteGrave(grave);
     }
 
