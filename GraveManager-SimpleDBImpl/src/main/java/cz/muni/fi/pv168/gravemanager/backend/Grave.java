@@ -1,5 +1,7 @@
 package cz.muni.fi.pv168.gravemanager.backend;
 
+import java.util.Objects;
+
 /**
  * This entity class represents Grave. Grave have some capacity, position
  * specified with row and column, and it could have some note. One grave could
@@ -68,18 +70,18 @@ public class Grave {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final Grave other = (Grave) obj;
-        if (this.id != other.id && (this.id == null || !this.id.equals(other.id))) {
+        if (this.id == null && this != obj) {
+            // this is a special case - two entities without id assigned yet
+            // should be evaluated as non equal
             return false;
         }
-        return true;
+        final Grave other = (Grave) obj;
+        return Objects.equals(this.id, other.id);
     }
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 97 * hash + (this.id != null ? this.id.hashCode() : 0);
-        return hash;
+        return Objects.hashCode(id);
     }
 
 }

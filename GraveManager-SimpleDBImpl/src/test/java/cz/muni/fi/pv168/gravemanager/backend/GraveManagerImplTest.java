@@ -85,8 +85,8 @@ public class GraveManagerImplTest {
         List<Grave> expected = Arrays.asList(g1, g2);
         List<Grave> actual = manager.findAllGraves();
 
-        Collections.sort(actual, idComparator);
-        Collections.sort(expected, idComparator);
+        Collections.sort(actual, GRAVE_ID_COMPARATOR);
+        Collections.sort(expected, GRAVE_ID_COMPARATOR);
 
         assertEquals(expected, actual);
         assertDeepEquals(expected, actual);
@@ -333,12 +333,7 @@ public class GraveManagerImplTest {
         assertEquals(expected.getNote(), actual.getNote());
     }
 
-    private static final Comparator<Grave> idComparator = new Comparator<Grave>() {
-
-        @Override
-        public int compare(Grave o1, Grave o2) {
-            return Long.valueOf(o1.getId()).compareTo(Long.valueOf(o2.getId()));
-        }
-    };
+    private static final Comparator<Grave> GRAVE_ID_COMPARATOR =
+            (g1, g2) -> g1.getId().compareTo(g2.getId());
 
 }

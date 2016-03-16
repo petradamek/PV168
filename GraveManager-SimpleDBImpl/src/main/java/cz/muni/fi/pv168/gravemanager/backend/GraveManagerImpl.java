@@ -191,7 +191,7 @@ public class GraveManagerImpl implements GraveManager {
 
             ResultSet rs = st.executeQuery();
 
-            List<Grave> result = new ArrayList<Grave>();
+            List<Grave> result = new ArrayList<>();
             while (rs.next()) {
                 result.add(resultSetToGrave(rs));
             }
