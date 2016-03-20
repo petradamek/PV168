@@ -1,10 +1,6 @@
 package cz.muni.fi.pv168.gravemanager.backend;
 
 import java.sql.Connection;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 import java.sql.SQLException;
 import javax.sql.DataSource;
 import org.apache.derby.jdbc.EmbeddedDataSource;
@@ -14,7 +10,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Tests for {@link GraveManagerImpl} class.
@@ -65,16 +61,16 @@ public class GraveManagerImplTest {
         manager.createGrave(grave);
 
         Long graveId = grave.getId();
-        assertNotNull(graveId);
-        Grave result = manager.getGrave(graveId);
-        assertEquals(grave, result);
-        assertNotSame(grave, result);
-        assertDeepEquals(grave, result);
+        assertThat(graveId).isNotNull();
+
+        assertThat(manager.getGrave(graveId))
+                .isNotSameAs(grave)
+                .isEqualToComparingFieldByField(grave);
     }
 
     @Test
     public void getAllGraves() {
-        assertTrue(manager.findAllGraves().isEmpty());
+        assertThat(manager.findAllGraves()).isEmpty();
 
         Grave g1 = newGrave(23, 44, 5, "Grave 1");
         Grave g2 = newGrave(12, 4, 1, "Grave 2");
@@ -82,21 +78,20 @@ public class GraveManagerImplTest {
         manager.createGrave(g1);
         manager.createGrave(g2);
 
-        List<Grave> expected = Arrays.asList(g1, g2);
-        List<Grave> actual = manager.findAllGraves();
-
-        Collections.sort(actual, GRAVE_ID_COMPARATOR);
-        Collections.sort(expected, GRAVE_ID_COMPARATOR);
-
-        assertEquals(expected, actual);
-        assertDeepEquals(expected, actual);
+        assertThat(manager.findAllGraves())
+                .usingFieldByFieldElementComparator()
+                .containsOnly(g1,g2);
     }
 
+    // Test exception with expected parameter of @Test annotation
+    // it does not allow to specify exact place where the exception
+    // is expected, therefor it is suitable only for simple single line tests
     @Test(expected = IllegalArgumentException.class)
     public void createNullGrave() {
         manager.createGrave(null);
     }
 
+    // Test exception with ExpectedException @Rule
     @Test
     public void createGraveWithExistingId() {
         Grave grave = newGrave(12, 13, 6, "Nice grave");
@@ -105,11 +100,13 @@ public class GraveManagerImplTest {
         manager.createGrave(grave);
     }
 
+    // Test exception using AssertJ assertThatThrownBy() method
+    // this requires Java 8 due to using lambda expression
     @Test
     public void createGraveWithNegativeColumn() {
         Grave grave = newGrave(-1, 13, 6, "Nice grave");
-        expectedException.expect(IllegalArgumentException.class);
-        manager.createGrave(grave);
+        assertThatThrownBy(() -> manager.createGrave(grave))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -137,16 +134,14 @@ public class GraveManagerImplTest {
     public void createGraveWithZeroColumn() {
         Grave grave = newGrave(0, 13, 6, "Nice grave");
         manager.createGrave(grave);
-        Grave result = manager.getGrave(grave.getId());
-        assertNotNull(result);
+        assertThat(manager.getGrave(grave.getId())).isNotNull();
     }
 
     @Test
     public void createGraveWithZeroRow() {
         Grave grave = newGrave(12, 0, 6, "Nice grave");
         manager.createGrave(grave);
-        Grave result = manager.getGrave(grave.getId());
-        assertNotNull(result);
+        assertThat(manager.getGrave(grave.getId())).isNotNull();
     }
 
     @Test
@@ -154,8 +149,8 @@ public class GraveManagerImplTest {
         Grave grave = newGrave(12, 11, 6, null);
         manager.createGrave(grave);
         Grave result = manager.getGrave(grave.getId());
-        assertNotNull(result);
-        assertNull(result.getNote());
+        assertThat(result).isNotNull();
+        assertThat(result.getNote()).isNull();
     }
 
     @Test
@@ -169,45 +164,46 @@ public class GraveManagerImplTest {
         grave = manager.getGrave(graveId);
         grave.setColumn(0);
         manager.updateGrave(grave);
-        assertEquals(0, grave.getColumn());
-        assertEquals(13, grave.getRow());
-        assertEquals(6, grave.getCapacity());
-        assertEquals("Nice grave", grave.getNote());
+        assertThat(grave.getColumn()).isEqualTo(0);
+        assertThat(grave.getRow()).isEqualTo(13);
+        assertThat(grave.getCapacity()).isEqualTo(6);
+        assertThat(grave.getNote()).isEqualTo("Nice grave");
 
         grave = manager.getGrave(graveId);
         grave.setRow(0);
         manager.updateGrave(grave);
-        assertEquals(0, grave.getColumn());
-        assertEquals(0, grave.getRow());
-        assertEquals(6, grave.getCapacity());
-        assertEquals("Nice grave", grave.getNote());
+        assertThat(grave.getColumn()).isEqualTo(0);
+        assertThat(grave.getRow()).isEqualTo(0);
+        assertThat(grave.getCapacity()).isEqualTo(6);
+        assertThat(grave.getNote()).isEqualTo("Nice grave");
 
         grave = manager.getGrave(graveId);
         grave.setCapacity(1);
         manager.updateGrave(grave);
-        assertEquals(0, grave.getColumn());
-        assertEquals(0, grave.getRow());
-        assertEquals(1, grave.getCapacity());
-        assertEquals("Nice grave", grave.getNote());
+        assertThat(grave.getColumn()).isEqualTo(0);
+        assertThat(grave.getRow()).isEqualTo(0);
+        assertThat(grave.getCapacity()).isEqualTo(1);
+        assertThat(grave.getNote()).isEqualTo("Nice grave");
 
         grave = manager.getGrave(graveId);
         grave.setNote("Not so nice grave");
         manager.updateGrave(grave);
-        assertEquals(0, grave.getColumn());
-        assertEquals(0, grave.getRow());
-        assertEquals(1, grave.getCapacity());
-        assertEquals("Not so nice grave", grave.getNote());
+        assertThat(grave.getColumn()).isEqualTo(0);
+        assertThat(grave.getRow()).isEqualTo(0);
+        assertThat(grave.getCapacity()).isEqualTo(1);
+        assertThat(grave.getNote()).isEqualTo("Not so nice grave");
 
         grave = manager.getGrave(graveId);
         grave.setNote(null);
         manager.updateGrave(grave);
-        assertEquals(0, grave.getColumn());
-        assertEquals(0, grave.getRow());
-        assertEquals(1, grave.getCapacity());
-        assertNull(grave.getNote());
+        assertThat(grave.getColumn()).isEqualTo(0);
+        assertThat(grave.getRow()).isEqualTo(0);
+        assertThat(grave.getCapacity()).isEqualTo(1);
+        assertThat(grave.getNote()).isNull();
 
         // Check if updates didn't affected other records
-        assertDeepEquals(anotherGrave, manager.getGrave(anotherGrave.getId()));
+        assertThat(manager.getGrave(anotherGrave.getId()))
+                .isEqualToComparingFieldByField(anotherGrave);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -277,13 +273,13 @@ public class GraveManagerImplTest {
         manager.createGrave(g1);
         manager.createGrave(g2);
 
-        assertNotNull(manager.getGrave(g1.getId()));
-        assertNotNull(manager.getGrave(g2.getId()));
+        assertThat(manager.getGrave(g1.getId())).isNotNull();
+        assertThat(manager.getGrave(g2.getId())).isNotNull();
 
         manager.deleteGrave(g1);
 
-        assertNull(manager.getGrave(g1.getId()));
-        assertNotNull(manager.getGrave(g2.getId()));
+        assertThat(manager.getGrave(g1.getId())).isNull();
+        assertThat(manager.getGrave(g2.getId())).isNotNull();
 
     }
 
@@ -316,24 +312,5 @@ public class GraveManagerImplTest {
         grave.setNote(note);
         return grave;
     }
-
-    private void assertDeepEquals(List<Grave> expectedList, List<Grave> actualList) {
-        for (int i = 0; i < expectedList.size(); i++) {
-            Grave expected = expectedList.get(i);
-            Grave actual = actualList.get(i);
-            assertDeepEquals(expected, actual);
-        }
-    }
-
-    private void assertDeepEquals(Grave expected, Grave actual) {
-        assertEquals(expected.getId(), actual.getId());
-        assertEquals(expected.getColumn(), actual.getColumn());
-        assertEquals(expected.getRow(), actual.getRow());
-        assertEquals(expected.getCapacity(), actual.getCapacity());
-        assertEquals(expected.getNote(), actual.getNote());
-    }
-
-    private static final Comparator<Grave> GRAVE_ID_COMPARATOR =
-            (g1, g2) -> g1.getId().compareTo(g2.getId());
 
 }
