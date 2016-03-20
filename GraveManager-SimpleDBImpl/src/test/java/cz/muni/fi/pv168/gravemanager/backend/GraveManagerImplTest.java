@@ -2,6 +2,7 @@ package cz.muni.fi.pv168.gravemanager.backend;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.function.Consumer;
 import javax.sql.DataSource;
 import org.apache.derby.jdbc.EmbeddedDataSource;
 import org.junit.After;
@@ -154,53 +155,41 @@ public class GraveManagerImplTest {
     }
 
     @Test
-    public void updateGrave() {
-        Grave grave = newGrave(12, 13, 6, "Nice grave");
+    public void updateGraveColumn() {
+        testUpdate((g) -> g.setColumn(1));
+    }
+
+    @Test
+    public void updateGraveRow() {
+        testUpdate((g) -> g.setRow(3));
+    }
+
+    @Test
+    public void updateGraveCapacity() {
+        testUpdate((g) -> g.setCapacity(5));
+    }
+
+    @Test
+    public void updateGraveNote() {
+        testUpdate((g) -> g.setNote("Not so nice grave"));
+    }
+
+    @Test
+    public void updateGraveNoteToNull() {
+        testUpdate((g) -> g.setNote(null));
+    }
+
+    private void testUpdate(Consumer<Grave> updateOperation) {
+        Grave sourceGrave = newGrave(12, 13, 6, "Nice grave");
         Grave anotherGrave = newGrave(18, 19, 100, "Another grave");
-        manager.createGrave(grave);
+        manager.createGrave(sourceGrave);
         manager.createGrave(anotherGrave);
-        Long graveId = grave.getId();
 
-        grave = manager.getGrave(graveId);
-        grave.setColumn(0);
-        manager.updateGrave(grave);
-        assertThat(grave.getColumn()).isEqualTo(0);
-        assertThat(grave.getRow()).isEqualTo(13);
-        assertThat(grave.getCapacity()).isEqualTo(6);
-        assertThat(grave.getNote()).isEqualTo("Nice grave");
+        updateOperation.accept(sourceGrave);
+        manager.updateGrave(sourceGrave);
 
-        grave = manager.getGrave(graveId);
-        grave.setRow(0);
-        manager.updateGrave(grave);
-        assertThat(grave.getColumn()).isEqualTo(0);
-        assertThat(grave.getRow()).isEqualTo(0);
-        assertThat(grave.getCapacity()).isEqualTo(6);
-        assertThat(grave.getNote()).isEqualTo("Nice grave");
-
-        grave = manager.getGrave(graveId);
-        grave.setCapacity(1);
-        manager.updateGrave(grave);
-        assertThat(grave.getColumn()).isEqualTo(0);
-        assertThat(grave.getRow()).isEqualTo(0);
-        assertThat(grave.getCapacity()).isEqualTo(1);
-        assertThat(grave.getNote()).isEqualTo("Nice grave");
-
-        grave = manager.getGrave(graveId);
-        grave.setNote("Not so nice grave");
-        manager.updateGrave(grave);
-        assertThat(grave.getColumn()).isEqualTo(0);
-        assertThat(grave.getRow()).isEqualTo(0);
-        assertThat(grave.getCapacity()).isEqualTo(1);
-        assertThat(grave.getNote()).isEqualTo("Not so nice grave");
-
-        grave = manager.getGrave(graveId);
-        grave.setNote(null);
-        manager.updateGrave(grave);
-        assertThat(grave.getColumn()).isEqualTo(0);
-        assertThat(grave.getRow()).isEqualTo(0);
-        assertThat(grave.getCapacity()).isEqualTo(1);
-        assertThat(grave.getNote()).isNull();
-
+        assertThat(manager.getGrave(sourceGrave.getId()))
+                .isEqualToComparingFieldByField(sourceGrave);
         // Check if updates didn't affected other records
         assertThat(manager.getGrave(anotherGrave.getId()))
                 .isEqualToComparingFieldByField(anotherGrave);
