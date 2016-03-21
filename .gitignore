@@ -16,3 +16,4 @@ hs_err_pid*
 
 /GraveManager-Tests/target/
 /GraveManager-SimpleDBImpl/target/
+/GraveManager-Backend/target/
