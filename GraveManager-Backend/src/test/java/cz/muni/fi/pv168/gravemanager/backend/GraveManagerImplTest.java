@@ -10,7 +10,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import javax.sql.DataSource;
-import org.apache.commons.dbcp.BasicDataSource;
+import org.apache.derby.jdbc.EmbeddedDataSource;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -28,9 +28,10 @@ public class GraveManagerImplTest {
     private DataSource ds;
 
     private static DataSource prepareDataSource() throws SQLException {
-        BasicDataSource ds = new BasicDataSource();
+        EmbeddedDataSource ds = new EmbeddedDataSource();
         //we will use in memory database
-        ds.setUrl("jdbc:derby:memory:gravemgr-test;create=true");
+        ds.setDatabaseName("memory:gravemgr-test");
+        ds.setCreateDatabase("create");
         return ds;
     }
 

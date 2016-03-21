@@ -12,7 +12,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import javax.sql.DataSource;
-import org.apache.commons.dbcp.BasicDataSource;
+import org.apache.derby.jdbc.EmbeddedDataSource;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,10 +30,10 @@ public class CemeteryManagerImplTest {
     private DataSource ds;
 
     private static DataSource prepareDataSource() throws SQLException {
-        BasicDataSource ds = new BasicDataSource();
+        EmbeddedDataSource ds = new EmbeddedDataSource();
         //we will use in memory database
-        ds.setUrl("jdbc:derby:memory:gravemgr-test;create=true");
-        //ds.setUrl("jdbc:derby://localhost:1527/test");
+        ds.setDatabaseName("memory:gravemgr-test");
+        ds.setCreateDatabase("create");
         return ds;
     }
 
