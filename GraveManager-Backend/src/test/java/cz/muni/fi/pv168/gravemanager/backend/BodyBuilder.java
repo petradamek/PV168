@@ -1,6 +1,5 @@
 package cz.muni.fi.pv168.gravemanager.backend;
 
-import java.sql.Date;
 import java.time.LocalDate;
 import java.time.Month;
 
@@ -13,8 +12,8 @@ public class BodyBuilder {
 
     private Long id;
     private String name;
-    private java.sql.Date born;
-    private java.sql.Date died;
+    private LocalDate born;
+    private LocalDate died;
     private boolean vampire;
 
     public BodyBuilder id(Long id) {
@@ -28,22 +27,22 @@ public class BodyBuilder {
     }
 
     public BodyBuilder born(LocalDate born) {
-        this.born = (born == null) ? null : Date.valueOf(born);
+        this.born = born;
         return this;
     }
 
     public BodyBuilder born(int year, Month month, int day) {
-        born(LocalDate.of(year, month, day));
+        this.born = LocalDate.of(year, month, day);
         return this;
     }
 
     public BodyBuilder died(LocalDate died) {
-        this.died = (died == null) ? null : Date.valueOf(died);
+        this.died = died;
         return this;
     }
 
     public BodyBuilder died(int year, Month month, int day) {
-        died(LocalDate.of(year, month, day));
+        this.died = LocalDate.of(year, month, day);
         return this;
     }
 

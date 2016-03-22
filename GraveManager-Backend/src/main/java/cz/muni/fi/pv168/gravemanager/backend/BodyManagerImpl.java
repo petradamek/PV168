@@ -5,10 +5,12 @@ import cz.muni.fi.pv168.common.IllegalEntityException;
 import cz.muni.fi.pv168.common.ServiceFailureException;
 import cz.muni.fi.pv168.common.ValidationException;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -36,7 +38,7 @@ public class BodyManagerImpl implements BodyManager {
             throw new IllegalStateException("DataSource is not set");
         }
     }
-        
+
     @Override
     public List<Body> findAllBodies() throws ServiceFailureException {
         checkDataSource();
@@ -74,8 +76,14 @@ public class BodyManagerImpl implements BodyManager {
                     "INSERT INTO Body (name,born,died,vampire) VALUES (?,?,?,?)",
                     Statement.RETURN_GENERATED_KEYS);
             st.setString(1, body.getName());
-            st.setDate(2, body.getBorn());
-            st.setDate(3, body.getDied());
+
+            // This is the proper way, how to handle LocalDate, however it is not
+            // supported by Derby yet - see https://issues.apache.org/jira/browse/DERBY-6445
+            //st.setObject(2, body.getBorn());
+            //st.setObject(3, body.getDied());
+
+            st.setDate(2, toSqlDate(body.getBorn()));
+            st.setDate(3, toSqlDate(body.getDied()));
             st.setInt(4, body.isVampire()?1:0);
 
             int count = st.executeUpdate();
@@ -138,8 +146,14 @@ public class BodyManagerImpl implements BodyManager {
             st = conn.prepareStatement(
                     "UPDATE Body SET name = ?, born = ?, died = ?, vampire = ? WHERE id = ?");
             st.setString(1, body.getName());
-            st.setDate(2, body.getBorn());
-            st.setDate(3, body.getDied());
+
+            // This is the proper way, how to handle LocalDate, however it is not
+            // supported by Derby yet - see https://issues.apache.org/jira/browse/DERBY-6445
+            // st.setObject(2, body.getBorn());
+            // st.setObject(3, body.getDied());
+
+            st.setDate(2, toSqlDate(body.getBorn()));
+            st.setDate(3, toSqlDate(body.getDied()));
             st.setInt(4, body.isVampire()?1:0);
             st.setLong(5, body.getId());
 
@@ -217,8 +231,14 @@ public class BodyManagerImpl implements BodyManager {
         Body result = new Body();
         result.setId(rs.getLong("id"));
         result.setName(rs.getString("name"));
-        result.setBorn(rs.getDate("born"));
-        result.setDied(rs.getDate("died"));
+
+        // This is the proper way, how to handle LocalDate, however it is not
+        // supported by Derby yet - see https://issues.apache.org/jira/browse/DERBY-6445
+        //result.setBorn(rs.getObject("born", LocalDate.class));
+        //result.setDied(rs.getObject("died", LocalDate.class));
+
+        result.setBorn(toLocalDate(rs.getDate("born")));
+        result.setDied(toLocalDate(rs.getDate("died")));
         result.setVampire(rs.getInt("vampire") != 0);
         return result;
     }
@@ -230,9 +250,17 @@ public class BodyManagerImpl implements BodyManager {
         if (body.getName() == null) {
             throw new ValidationException("name is null");
         }
-        if (body.getBorn() != null && body.getDied() != null && body.getDied().before(body.getBorn())) {
+        if (body.getBorn() != null && body.getDied() != null && body.getDied().isBefore(body.getBorn())) {
             throw new ValidationException("died is before born");
         }
     }
     
+    private static Date toSqlDate(LocalDate localDate) {
+        return localDate == null ? null : Date.valueOf(localDate);
+    }
+
+    private static LocalDate toLocalDate(Date date) {
+        return date == null ? null : date.toLocalDate();
+    }
+
 }

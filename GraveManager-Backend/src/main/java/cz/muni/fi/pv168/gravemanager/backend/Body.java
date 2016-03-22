@@ -1,6 +1,6 @@
 package cz.muni.fi.pv168.gravemanager.backend;
 
-import java.sql.Date;
+import java.time.LocalDate;
 import java.util.Objects;
 
 /**
@@ -13,23 +13,23 @@ public class Body {
 
     private Long id;
     private String name;
-    private java.sql.Date born;
-    private java.sql.Date died;
+    private LocalDate born;
+    private LocalDate died;
     private boolean vampire;
 
-    public Date getBorn() {
+    public LocalDate getBorn() {
         return born;
     }
 
-    public void setBorn(Date born) {
+    public void setBorn(LocalDate born) {
         this.born = born;
     }
 
-    public Date getDied() {
+    public LocalDate getDied() {
         return died;
     }
 
-    public void setDied(Date died) {
+    public void setDied(LocalDate died) {
         this.died = died;
     }
 

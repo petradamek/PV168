@@ -3,8 +3,8 @@ package cz.muni.fi.pv168.gravemanager.backend;
 import cz.muni.fi.pv168.common.DBUtils;
 import cz.muni.fi.pv168.common.IllegalEntityException;
 import cz.muni.fi.pv168.common.ValidationException;
-import java.sql.Date;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.function.Consumer;
 import javax.sql.DataSource;
 import org.apache.derby.jdbc.EmbeddedDataSource;
@@ -196,12 +196,12 @@ public class BodyManagerImplTest {
 
     @Test
     public void updateBodyBorn() {
-        updateBody((b) -> b.setBorn(Date.valueOf("1999-12-11")));
+        updateBody((b) -> b.setBorn(LocalDate.of(1999,DECEMBER,11)));
     }
 
     @Test
     public void updateBodyDied() {
-        updateBody((b) -> b.setDied(Date.valueOf("1999-12-11")));
+        updateBody((b) -> b.setDied(LocalDate.of(1999,DECEMBER,12)));
     }
 
     @Test
@@ -242,7 +242,7 @@ public class BodyManagerImplTest {
     public void updateBodyWithBornAfterDied() {
         Body body = sampleBodyJoe().born(1962,OCTOBER,21).died(2011,NOVEMBER,8).build();
         manager.createBody(body);
-        body.setBorn(Date.valueOf("2011-11-09"));
+        body.setBorn(LocalDate.of(2011,NOVEMBER,9));
 
         expectedException.expect(ValidationException.class);
         manager.updateBody(body);
