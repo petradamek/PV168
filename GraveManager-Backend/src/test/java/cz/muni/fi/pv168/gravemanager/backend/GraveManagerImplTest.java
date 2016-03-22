@@ -10,7 +10,6 @@ import javax.sql.DataSource;
 import org.apache.derby.jdbc.EmbeddedDataSource;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -68,14 +67,6 @@ public class GraveManagerImplTest {
                 .row(27)
                 .capacity(6)
                 .note("Big Grave");
-    }
-
-    @Test
-    @Ignore
-    public void todo() {
-        fail("Přidat ke třídě body atribut typu enum (např. pohlaví). "
-                + "Příklady na webovku a jednoduchou implementaci upravit tak, "
-                + "aby pracovali s třídou body (ukáže se tam víc typů: date, enum, boolean).");
     }
 
     @Test
