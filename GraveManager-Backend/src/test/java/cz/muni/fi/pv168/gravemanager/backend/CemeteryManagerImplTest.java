@@ -2,15 +2,9 @@ package cz.muni.fi.pv168.gravemanager.backend;
 
 import cz.muni.fi.pv168.common.DBUtils;
 import cz.muni.fi.pv168.common.IllegalEntityException;
-import static cz.muni.fi.pv168.gravemanager.backend.BodyManagerImplTest.assertBodyCollectionDeepEquals;
 import static cz.muni.fi.pv168.gravemanager.backend.BodyManagerImplTest.newBody;
-import static cz.muni.fi.pv168.gravemanager.backend.GraveManagerImplTest.assertGraveCollectionDeepEquals;
-import static cz.muni.fi.pv168.gravemanager.backend.GraveManagerImplTest.assertGraveDeepEquals;
 import static cz.muni.fi.pv168.gravemanager.backend.GraveManagerImplTest.newGrave;
 import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import javax.sql.DataSource;
 import org.apache.derby.jdbc.EmbeddedDataSource;
 import org.junit.After;
@@ -19,7 +13,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
+
 /**
  *
  * @author petr
@@ -98,20 +93,20 @@ public class CemeteryManagerImplTest {
     @Test
     public void findGraveWithBody() {
 
-        assertNull(manager.findGraveWithBody(b1));
-        assertNull(manager.findGraveWithBody(b2));
-        assertNull(manager.findGraveWithBody(b3));
-        assertNull(manager.findGraveWithBody(b4));
-        assertNull(manager.findGraveWithBody(b5));
+        assertThat(manager.findGraveWithBody(b1)).isNull();
+        assertThat(manager.findGraveWithBody(b2)).isNull();
+        assertThat(manager.findGraveWithBody(b3)).isNull();
+        assertThat(manager.findGraveWithBody(b4)).isNull();
+        assertThat(manager.findGraveWithBody(b5)).isNull();
 
         manager.putBodyIntoGrave(b1, g3);
 
-        assertEquals(g3, manager.findGraveWithBody(b1));
-        assertGraveDeepEquals(g3, manager.findGraveWithBody(b1));
-        assertNull(manager.findGraveWithBody(b2));
-        assertNull(manager.findGraveWithBody(b3));
-        assertNull(manager.findGraveWithBody(b4));
-        assertNull(manager.findGraveWithBody(b5));
+        assertThat(manager.findGraveWithBody(b1))
+                .isEqualToComparingFieldByField(g3);
+        assertThat(manager.findGraveWithBody(b2)).isNull();
+        assertThat(manager.findGraveWithBody(b3)).isNull();
+        assertThat(manager.findGraveWithBody(b4)).isNull();
+        assertThat(manager.findGraveWithBody(b5)).isNull();
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -127,21 +122,23 @@ public class CemeteryManagerImplTest {
     @Test
     public void findBodiesInGrave() {
 
-        assertTrue(manager.findBodiesInGrave(g1).isEmpty());
-        assertTrue(manager.findBodiesInGrave(g2).isEmpty());
-        assertTrue(manager.findBodiesInGrave(g3).isEmpty());
+        assertThat(manager.findBodiesInGrave(g1)).isEmpty();
+        assertThat(manager.findBodiesInGrave(g2)).isEmpty();
+        assertThat(manager.findBodiesInGrave(g3)).isEmpty();
 
         manager.putBodyIntoGrave(b2, g3);
         manager.putBodyIntoGrave(b3, g2);
         manager.putBodyIntoGrave(b4, g3);
         manager.putBodyIntoGrave(b5, g2);
 
-        List<Body> bodiesInGrave2 = Arrays.asList(b3,b5);
-        List<Body> bodiesInGrave3 = Arrays.asList(b2,b4);
-
-        assertTrue(manager.findBodiesInGrave(g1).isEmpty());
-        assertBodyCollectionDeepEquals(bodiesInGrave2, manager.findBodiesInGrave(g2));
-        assertBodyCollectionDeepEquals(bodiesInGrave3, manager.findBodiesInGrave(g3));
+        assertThat(manager.findBodiesInGrave(g1))
+                .isEmpty();
+        assertThat(manager.findBodiesInGrave(g2))
+                .usingFieldByFieldElementComparator()
+                .containsOnly(b3,b5);
+        assertThat(manager.findBodiesInGrave(g3))
+                .usingFieldByFieldElementComparator()
+                .containsOnly(b2,b4);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -157,75 +154,81 @@ public class CemeteryManagerImplTest {
     @Test
     public void findUnburiedBodies() {
 
-        List<Body> unburiedBodies = Arrays.asList(b1,b2,b3,b4,b5);
-
-        assertBodyCollectionDeepEquals(unburiedBodies, manager.findUnburiedBodies());
+        assertThat(manager.findUnburiedBodies())
+                .usingFieldByFieldElementComparator()
+                .containsOnly(b1,b2,b3,b4,b5);
 
         manager.putBodyIntoGrave(b3, g1);
-        unburiedBodies = Arrays.asList(b1,b2,b4,b5);
 
-        assertBodyCollectionDeepEquals(unburiedBodies, manager.findUnburiedBodies());
-
+        assertThat(manager.findUnburiedBodies())
+                .usingFieldByFieldElementComparator()
+                .containsOnly(b1,b2,b4,b5);
     }
 
     @Test
     public void findEmptyGraves() {
 
-        List<Grave> emptyGraves = Arrays.asList(g1,g2,g3);
-        assertGraveCollectionDeepEquals(emptyGraves, manager.findEmptyGraves());
+        assertThat(manager.findEmptyGraves())
+                .usingFieldByFieldElementComparator()
+                .containsOnly(g1,g2,g3);
 
         manager.putBodyIntoGrave(b1, g3);
         manager.putBodyIntoGrave(b3, g3);
         manager.putBodyIntoGrave(b5, g1);
 
-        emptyGraves = Arrays.asList(g2);
-        assertGraveCollectionDeepEquals(emptyGraves, manager.findEmptyGraves());
+        assertThat(manager.findEmptyGraves())
+                .usingFieldByFieldElementComparator()
+                .containsOnly(g2);
     }
 
     @Test
     public void findGravesWithSomeFreeSpace() {
 
-        List<Grave> notFullGraves = Arrays.asList(g1,g2,g3);
-        assertGraveCollectionDeepEquals(notFullGraves, manager.findGravesWithSomeFreeSpace());
+        assertThat(manager.findGravesWithSomeFreeSpace())
+                .usingFieldByFieldElementComparator()
+                .containsOnly(g1,g2,g3);
 
         manager.putBodyIntoGrave(b1, g3);
         manager.putBodyIntoGrave(b3, g3);
         manager.putBodyIntoGrave(b5, g1);
 
-        notFullGraves = Arrays.asList(g2,g3);
-        assertGraveCollectionDeepEquals(notFullGraves, manager.findGravesWithSomeFreeSpace());
+        assertThat(manager.findGravesWithSomeFreeSpace())
+                .usingFieldByFieldElementComparator()
+                .containsOnly(g2,g3);
     }
 
     @Test
     public void putBodyIntoGrave() {
 
-        assertNull(manager.findGraveWithBody(b1));
-        assertNull(manager.findGraveWithBody(b2));
-        assertNull(manager.findGraveWithBody(b3));
-        assertNull(manager.findGraveWithBody(b4));
-        assertNull(manager.findGraveWithBody(b5));
+        assertThat(manager.findGraveWithBody(b1)).isNull();
+        assertThat(manager.findGraveWithBody(b2)).isNull();
+        assertThat(manager.findGraveWithBody(b3)).isNull();
+        assertThat(manager.findGraveWithBody(b4)).isNull();
+        assertThat(manager.findGraveWithBody(b5)).isNull();
 
         manager.putBodyIntoGrave(b1, g3);
         manager.putBodyIntoGrave(b5, g1);
         manager.putBodyIntoGrave(b3, g3);
 
-        List<Body> bodiesInGrave1 = Arrays.asList(b5);
-        List<Body> bodiesInGrave2 = Collections.emptyList();
-        List<Body> bodiesInGrave3 = Arrays.asList(b1,b3);
+        assertThat(manager.findBodiesInGrave(g1))
+                .usingFieldByFieldElementComparator()
+                .containsOnly(b5);
+        assertThat(manager.findBodiesInGrave(g2))
+                .isEmpty();
+        assertThat(manager.findBodiesInGrave(g3))
+                .usingFieldByFieldElementComparator()
+                .containsOnly(b1,b3);
 
-        assertBodyCollectionDeepEquals(bodiesInGrave1, manager.findBodiesInGrave(g1));
-        assertBodyCollectionDeepEquals(bodiesInGrave2, manager.findBodiesInGrave(g2));
-        assertBodyCollectionDeepEquals(bodiesInGrave3, manager.findBodiesInGrave(g3));
-
-        assertEquals(g3, manager.findGraveWithBody(b1));
-        assertGraveDeepEquals(g3, manager.findGraveWithBody(b1));
-        assertNull(manager.findGraveWithBody(b2));
-        assertEquals(g3, manager.findGraveWithBody(b3));
-        assertGraveDeepEquals(g3, manager.findGraveWithBody(b3));
-        assertNull(manager.findGraveWithBody(b4));
-        assertEquals(g1, manager.findGraveWithBody(b5));
-        assertGraveDeepEquals(g1, manager.findGraveWithBody(b5));
-
+        assertThat(manager.findGraveWithBody(b1))
+                .isEqualToComparingFieldByField(g3);
+        assertThat(manager.findGraveWithBody(b2))
+                .isNull();
+        assertThat(manager.findGraveWithBody(b3))
+                .isEqualToComparingFieldByField(g3);
+        assertThat(manager.findGraveWithBody(b4))
+                .isNull();
+        assertThat(manager.findGraveWithBody(b5))
+                .isEqualToComparingFieldByField(g1);
     }
 
     @Test
@@ -235,15 +238,18 @@ public class CemeteryManagerImplTest {
         manager.putBodyIntoGrave(b5, g1);
         manager.putBodyIntoGrave(b3, g3);
 
-        try {
-            manager.putBodyIntoGrave(b1, g3);
-            fail();
-        } catch (IllegalEntityException ex) {}
+        assertThatThrownBy(() -> manager.putBodyIntoGrave(b1, g3))
+                .isInstanceOf(IllegalEntityException.class);
 
         // verify that failure was atomic and no data was changed
-        assertBodyCollectionDeepEquals(Arrays.asList(b5), manager.findBodiesInGrave(g1));
-        assertBodyCollectionDeepEquals(Collections.emptyList(), manager.findBodiesInGrave(g2));
-        assertBodyCollectionDeepEquals(Arrays.asList(b1,b3), manager.findBodiesInGrave(g3));
+        assertThat(manager.findBodiesInGrave(g1))
+                .usingFieldByFieldElementComparator()
+                .containsOnly(b5);
+        assertThat(manager.findBodiesInGrave(g2))
+                .isEmpty();
+        assertThat(manager.findBodiesInGrave(g3))
+                .usingFieldByFieldElementComparator()
+                .containsOnly(b1,b3);
     }
 
     @Test
@@ -253,15 +259,18 @@ public class CemeteryManagerImplTest {
         manager.putBodyIntoGrave(b5, g1);
         manager.putBodyIntoGrave(b3, g3);
 
-        try {
-            manager.putBodyIntoGrave(b1, g2);
-            fail();
-        } catch (IllegalEntityException ex) {}
+        assertThatThrownBy(() -> manager.putBodyIntoGrave(b1, g2))
+                .isInstanceOf(IllegalEntityException.class);
 
         // verify that failure was atomic and no data was changed
-        assertBodyCollectionDeepEquals(Arrays.asList(b5), manager.findBodiesInGrave(g1));
-        assertBodyCollectionDeepEquals(Collections.emptyList(), manager.findBodiesInGrave(g2));
-        assertBodyCollectionDeepEquals(Arrays.asList(b1,b3), manager.findBodiesInGrave(g3));
+        assertThat(manager.findBodiesInGrave(g1))
+                .usingFieldByFieldElementComparator()
+                .containsOnly(b5);
+        assertThat(manager.findBodiesInGrave(g2))
+                .isEmpty();
+        assertThat(manager.findBodiesInGrave(g3))
+                .usingFieldByFieldElementComparator()
+                .containsOnly(b1,b3);
     }
 
     @Test
@@ -271,15 +280,18 @@ public class CemeteryManagerImplTest {
         manager.putBodyIntoGrave(b5, g1);
         manager.putBodyIntoGrave(b3, g3);
 
-        try {
-            manager.putBodyIntoGrave(b2, g1);
-            fail();
-        } catch (IllegalEntityException ex) {}
+        assertThatThrownBy(() -> manager.putBodyIntoGrave(b2, g1))
+                .isInstanceOf(IllegalEntityException.class);
 
         // verify that failure was atomic and no data was changed
-        assertBodyCollectionDeepEquals(Arrays.asList(b5), manager.findBodiesInGrave(g1));
-        assertBodyCollectionDeepEquals(Collections.emptyList(), manager.findBodiesInGrave(g2));
-        assertBodyCollectionDeepEquals(Arrays.asList(b1,b3), manager.findBodiesInGrave(g3));
+        assertThat(manager.findBodiesInGrave(g1))
+                .usingFieldByFieldElementComparator()
+                .containsOnly(b5);
+        assertThat(manager.findBodiesInGrave(g2))
+                .isEmpty();
+        assertThat(manager.findBodiesInGrave(g3))
+                .usingFieldByFieldElementComparator()
+                .containsOnly(b1,b3);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -320,27 +332,39 @@ public class CemeteryManagerImplTest {
         manager.putBodyIntoGrave(b4, g3);
         manager.putBodyIntoGrave(b5, g1);
 
-        assertEquals(g3, manager.findGraveWithBody(b1));
-        assertNull(manager.findGraveWithBody(b2));
-        assertEquals(g3, manager.findGraveWithBody(b3));
-        assertEquals(g3, manager.findGraveWithBody(b4));
-        assertEquals(g1, manager.findGraveWithBody(b5));
+        assertThat(manager.findGraveWithBody(b1))
+                .isEqualToComparingFieldByField(g3);
+        assertThat(manager.findGraveWithBody(b2))
+                .isNull();
+        assertThat(manager.findGraveWithBody(b3))
+                .isEqualToComparingFieldByField(g3);
+        assertThat(manager.findGraveWithBody(b4))
+                .isEqualToComparingFieldByField(g3);
+        assertThat(manager.findGraveWithBody(b5))
+                .isEqualToComparingFieldByField(g1);
 
         manager.removeBodyFromGrave(b3, g3);
 
-        List<Body> bodiesInGrave1 = Arrays.asList(b5);
-        List<Body> bodiesInGrave2 = Collections.emptyList();
-        List<Body> bodiesInGrave3 = Arrays.asList(b1,b4);
+        assertThat(manager.findBodiesInGrave(g1))
+                .usingFieldByFieldElementComparator()
+                .containsOnly(b5);
+        assertThat(manager.findBodiesInGrave(g2))
+                .isEmpty();
+        assertThat(manager.findBodiesInGrave(g3))
+                .usingFieldByFieldElementComparator()
+                .containsOnly(b1,b4);
 
-        assertBodyCollectionDeepEquals(bodiesInGrave1, manager.findBodiesInGrave(g1));
-        assertBodyCollectionDeepEquals(bodiesInGrave2, manager.findBodiesInGrave(g2));
-        assertBodyCollectionDeepEquals(bodiesInGrave3, manager.findBodiesInGrave(g3));
 
-        assertEquals(g3, manager.findGraveWithBody(b1));
-        assertNull(manager.findGraveWithBody(b2));
-        assertNull(manager.findGraveWithBody(b3));
-        assertEquals(g3, manager.findGraveWithBody(b4));
-        assertEquals(g1, manager.findGraveWithBody(b5));
+        assertThat(manager.findGraveWithBody(b1))
+                .isEqualToComparingFieldByField(g3);
+        assertThat(manager.findGraveWithBody(b2))
+                .isNull();
+        assertThat(manager.findGraveWithBody(b3))
+                .isNull();
+        assertThat(manager.findGraveWithBody(b4))
+                .isEqualToComparingFieldByField(g3);
+        assertThat(manager.findGraveWithBody(b5))
+                .isEqualToComparingFieldByField(g1);
     }
 
     @Test
@@ -350,15 +374,18 @@ public class CemeteryManagerImplTest {
         manager.putBodyIntoGrave(b4, g3);
         manager.putBodyIntoGrave(b5, g1);
 
-        try {
-            manager.removeBodyFromGrave(b3, g1);
-            fail();
-        } catch (IllegalEntityException ex) {}
+        assertThatThrownBy(() -> manager.putBodyIntoGrave(b3, g1))
+                .isInstanceOf(IllegalEntityException.class);
 
         // Check that previous tests didn't affect data in database
-        assertBodyCollectionDeepEquals(Arrays.asList(b5), manager.findBodiesInGrave(g1));
-        assertBodyCollectionDeepEquals(Collections.emptyList(), manager.findBodiesInGrave(g2));
-        assertBodyCollectionDeepEquals(Arrays.asList(b1,b4), manager.findBodiesInGrave(g3));
+        assertThat(manager.findBodiesInGrave(g1))
+                .usingFieldByFieldElementComparator()
+                .containsOnly(b5);
+        assertThat(manager.findBodiesInGrave(g2))
+                .isEmpty();
+        assertThat(manager.findBodiesInGrave(g3))
+                .usingFieldByFieldElementComparator()
+                .containsOnly(b1,b4);
     }
 
     @Test
@@ -368,15 +395,18 @@ public class CemeteryManagerImplTest {
         manager.putBodyIntoGrave(b4, g3);
         manager.putBodyIntoGrave(b5, g1);
 
-        try {
-            manager.removeBodyFromGrave(b1, g1);
-            fail();
-        } catch (IllegalEntityException ex) {}
+        assertThatThrownBy(() -> manager.putBodyIntoGrave(b1, g1))
+                .isInstanceOf(IllegalEntityException.class);
 
         // Check that previous tests didn't affect data in database
-        assertBodyCollectionDeepEquals(Arrays.asList(b5), manager.findBodiesInGrave(g1));
-        assertBodyCollectionDeepEquals(Collections.emptyList(), manager.findBodiesInGrave(g2));
-        assertBodyCollectionDeepEquals(Arrays.asList(b1,b4), manager.findBodiesInGrave(g3));
+        assertThat(manager.findBodiesInGrave(g1))
+                .usingFieldByFieldElementComparator()
+                .containsOnly(b5);
+        assertThat(manager.findBodiesInGrave(g2))
+                .isEmpty();
+        assertThat(manager.findBodiesInGrave(g3))
+                .usingFieldByFieldElementComparator()
+                .containsOnly(b1,b4);
     }
 
     @Test(expected = IllegalArgumentException.class)

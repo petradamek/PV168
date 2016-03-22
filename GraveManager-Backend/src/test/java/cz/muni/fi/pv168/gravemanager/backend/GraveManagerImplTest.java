@@ -4,11 +4,6 @@ import cz.muni.fi.pv168.common.DBUtils;
 import cz.muni.fi.pv168.common.IllegalEntityException;
 import cz.muni.fi.pv168.common.ValidationException;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 import java.util.function.Consumer;
 import javax.sql.DataSource;
 import org.apache.derby.jdbc.EmbeddedDataSource;
@@ -19,7 +14,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 
 /**
  *
@@ -69,17 +64,17 @@ public class GraveManagerImplTest {
         manager.createGrave(grave);
 
         Long graveId = grave.getId();
-        assertNotNull(graveId);
-        Grave result = manager.getGrave(graveId);
-        assertEquals(grave, result);
-        assertNotSame(grave, result);
-        assertGraveDeepEquals(grave, result);
+        assertThat(graveId).isNotNull();
+
+        assertThat(manager.getGrave(graveId))
+                .isNotSameAs(grave)
+                .isEqualToComparingFieldByField(grave);
     }
 
     @Test
     public void findAllGraves() {
 
-        assertTrue(manager.findAllGraves().isEmpty());
+        assertThat(manager.findAllGraves()).isEmpty();
 
         Grave g1 = newGrave(23,44,5,"Grave 1");
         Grave g2 = newGrave(12,4,1,"Grave 2");
@@ -87,10 +82,9 @@ public class GraveManagerImplTest {
         manager.createGrave(g1);
         manager.createGrave(g2);
 
-        List<Grave> expected = Arrays.asList(g1,g2);
-        List<Grave> actual = manager.findAllGraves();
-
-        assertGraveCollectionDeepEquals(expected, actual);
+        assertThat(manager.findAllGraves())
+                .usingFieldByFieldElementComparator()
+                .containsOnly(g1,g2);
     }
 
     // Test exception with expected parameter of @Test annotation
@@ -110,11 +104,13 @@ public class GraveManagerImplTest {
         manager.createGrave(grave);
     }
 
+    // Test exception using AssertJ assertThatThrownBy() method
+    // this requires Java 8 due to using lambda expression
     @Test
     public void createGraveWithNegativeColumn() {
         Grave grave = newGrave(-1, 13, 6, "Nice grave");
-        expectedException.expect(ValidationException.class);
-        manager.createGrave(grave);
+        assertThatThrownBy(() -> manager.createGrave(grave))
+                .isInstanceOf(ValidationException.class);
     }
 
     @Test
@@ -142,28 +138,31 @@ public class GraveManagerImplTest {
     public void createGraveWithZeroColumn() {
         Grave grave = newGrave(0, 13, 6, "Nice grave");
         manager.createGrave(grave);
-        Grave result = manager.getGrave(grave.getId());
-        assertNotNull(result);
-        assertGraveDeepEquals(grave, result);
+
+        assertThat(manager.getGrave(grave.getId()))
+                .isNotNull()
+                .isEqualToComparingFieldByField(grave);
     }
 
     @Test
     public void createGraveWithZeroRow() {
         Grave grave = newGrave(12, 0, 6, "Nice grave");
         manager.createGrave(grave);
-        Grave result = manager.getGrave(grave.getId());
-        assertNotNull(result);
-        assertGraveDeepEquals(grave, result);
+
+        assertThat(manager.getGrave(grave.getId()))
+                .isNotNull()
+                .isEqualToComparingFieldByField(grave);
     }
 
     @Test
     public void createGraveWithNullNote() {
         Grave grave = newGrave(12, 11, 6, null);
         manager.createGrave(grave);
-        Grave result = manager.getGrave(grave.getId());
-        assertNotNull(result);
-        assertNull(result.getNote());
-    }
+
+        assertThat(manager.getGrave(grave.getId()))
+                .isNotNull()
+                .isEqualToComparingFieldByField(grave);
+}
 
     @Test
     public void updateGraveColumn() {
@@ -199,10 +198,11 @@ public class GraveManagerImplTest {
         updateOperation.accept(sourceGrave);
         manager.updateGrave(sourceGrave);
 
-        Grave result = manager.getGrave(sourceGrave.getId());
-        assertGraveDeepEquals(sourceGrave, result);
+        assertThat(manager.getGrave(sourceGrave.getId()))
+                .isEqualToComparingFieldByField(sourceGrave);
         // Check if updates didn't affected other records
-        assertGraveDeepEquals(anotherGrave, manager.getGrave(anotherGrave.getId()));
+        assertThat(manager.getGrave(anotherGrave.getId()))
+                .isEqualToComparingFieldByField(anotherGrave);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -272,13 +272,13 @@ public class GraveManagerImplTest {
         manager.createGrave(g1);
         manager.createGrave(g2);
 
-        assertNotNull(manager.getGrave(g1.getId()));
-        assertNotNull(manager.getGrave(g2.getId()));
+        assertThat(manager.getGrave(g1.getId())).isNotNull();
+        assertThat(manager.getGrave(g2.getId())).isNotNull();
 
         manager.deleteGrave(g1);
 
-        assertNull(manager.getGrave(g1.getId()));
-        assertNotNull(manager.getGrave(g2.getId()));
+        assertThat(manager.getGrave(g1.getId())).isNull();
+        assertThat(manager.getGrave(g2.getId())).isNotNull();
 
     }
 
@@ -312,41 +312,4 @@ public class GraveManagerImplTest {
         return grave;
     }
 
-    static void assertGraveDeepEquals(Grave expected, Grave actual) {
-        assertEquals(expected.getId(), actual.getId());
-        assertEquals(expected.getColumn(), actual.getColumn());
-        assertEquals(expected.getRow(), actual.getRow());
-        assertEquals(expected.getCapacity(), actual.getCapacity());
-        assertEquals(expected.getNote(), actual.getNote());
-    }
-
-    private static Comparator<Grave> graveKeyComparator = new Comparator<Grave>() {
-
-        @Override
-        public int compare(Grave o1, Grave o2) {
-            Long k1 = o1.getId();
-            Long k2 = o2.getId();
-            if (k1 == null && k2 == null) {
-                return 0;
-            } else if (k1 == null && k2 != null) {
-                return -1;
-            } else if (k1 != null && k2 == null) {
-                return 1;
-            } else {
-                return k1.compareTo(k2);
-            }
-        }
-    };
-
-    static void assertGraveCollectionDeepEquals(List<Grave> expected, List<Grave> actual) {
-
-        assertEquals(expected.size(), actual.size());
-        List<Grave> expectedSortedList = new ArrayList<Grave>(expected);
-        List<Grave> actualSortedList = new ArrayList<Grave>(actual);
-        Collections.sort(expectedSortedList,graveKeyComparator);
-        Collections.sort(actualSortedList,graveKeyComparator);
-        for (int i = 0; i < expectedSortedList.size(); i++) {
-            assertGraveDeepEquals(expectedSortedList.get(i), actualSortedList.get(i));
-        }
-    }
 }
