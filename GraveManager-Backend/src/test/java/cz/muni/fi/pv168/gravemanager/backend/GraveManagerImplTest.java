@@ -2,6 +2,7 @@ package cz.muni.fi.pv168.gravemanager.backend;
 
 import cz.muni.fi.pv168.common.DBUtils;
 import cz.muni.fi.pv168.common.IllegalEntityException;
+import cz.muni.fi.pv168.common.ServiceFailureException;
 import cz.muni.fi.pv168.common.ValidationException;
 import java.sql.SQLException;
 import java.util.function.Consumer;
@@ -15,6 +16,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 /**
  *
@@ -312,6 +314,48 @@ public class GraveManagerImplTest {
         Grave grave = sampleSmallGrave().id(1L).build();
         expectedException.expect(IllegalEntityException.class);
         manager.deleteGrave(grave);
+    }
+
+    private void testExpectedServiceFailureException(Consumer<GraveManager> operation) throws SQLException {
+        SQLException sqlException = new SQLException();
+        DataSource failingDataSource = mock(DataSource.class);
+        when(failingDataSource.getConnection()).thenThrow(sqlException);
+        manager.setDataSource(failingDataSource);
+        assertThatThrownBy(() -> operation.accept(manager))
+                .isInstanceOf(ServiceFailureException.class)
+                .hasCause(sqlException);
+    }
+
+    @Test
+    public void createGraveWithSqlExceptionThrown() throws SQLException {
+        Grave grave = sampleSmallGrave().build();
+        testExpectedServiceFailureException((m) -> m.createGrave(grave));
+    }
+
+    @Test
+    public void updateGraveWithSqlExceptionThrown() throws SQLException {
+        Grave grave = sampleSmallGrave().build();
+        manager.createGrave(grave);
+        testExpectedServiceFailureException((m) -> m.updateGrave(grave));
+    }
+
+    @Test
+    public void getGraveWithSqlExceptionThrown() throws SQLException {
+        Grave grave = sampleSmallGrave().build();
+        manager.createGrave(grave);
+        testExpectedServiceFailureException((m) -> m.getGrave(grave.getId()));
+    }
+
+    @Test
+    public void deleteGraveWithSqlExceptionThrown() throws SQLException {
+        Grave grave = sampleSmallGrave().build();
+        manager.createGrave(grave);
+        testExpectedServiceFailureException((m) -> m.deleteGrave(grave));
+    }
+
+    @Test
+    public void findAllGravesWithSqlExceptionThrown() throws SQLException {
+        testExpectedServiceFailureException((m) -> m.findAllGraves());
     }
 
 }

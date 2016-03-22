@@ -2,6 +2,7 @@ package cz.muni.fi.pv168.gravemanager.backend;
 
 import cz.muni.fi.pv168.common.DBUtils;
 import cz.muni.fi.pv168.common.IllegalEntityException;
+import cz.muni.fi.pv168.common.ServiceFailureException;
 import cz.muni.fi.pv168.common.ValidationException;
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -16,6 +17,7 @@ import org.junit.rules.ExpectedException;
 
 import static java.time.Month.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 /**
  *
@@ -283,6 +285,48 @@ public class BodyManagerImplTest {
         Body body = sampleBodyJoe().id(1L).build();
         expectedException.expect(IllegalEntityException.class);
         manager.deleteBody(body);
+    }
+
+    private void testExpectedServiceFailureException(Consumer<BodyManager> operation) throws SQLException {
+        SQLException sqlException = new SQLException();
+        DataSource failingDataSource = mock(DataSource.class);
+        when(failingDataSource.getConnection()).thenThrow(sqlException);
+        manager.setDataSource(failingDataSource);
+        assertThatThrownBy(() -> operation.accept(manager))
+                .isInstanceOf(ServiceFailureException.class)
+                .hasCause(sqlException);
+    }
+
+    @Test
+    public void createBodyWithSqlExceptionThrown() throws SQLException {
+        Body body = sampleBodyJoe().build();
+        testExpectedServiceFailureException((m) -> m.createBody(body));
+    }
+
+    @Test
+    public void updateBodyWithSqlExceptionThrown() throws SQLException {
+        Body body = sampleBodyJoe().build();
+        manager.createBody(body);
+        testExpectedServiceFailureException((m) -> m.updateBody(body));
+    }
+
+    @Test
+    public void getBodyWithSqlExceptionThrown() throws SQLException {
+        Body body = sampleBodyJoe().build();
+        manager.createBody(body);
+        testExpectedServiceFailureException((m) -> m.getBody(body.getId()));
+    }
+
+    @Test
+    public void deleteBodyWithSqlExceptionThrown() throws SQLException {
+        Body body = sampleBodyJoe().build();
+        manager.createBody(body);
+        testExpectedServiceFailureException((m) -> m.deleteBody(body));
+    }
+
+    @Test
+    public void findAllBodiesWithSqlExceptionThrown() throws SQLException {
+        testExpectedServiceFailureException((m) -> m.findAllBodies());
     }
 
 }

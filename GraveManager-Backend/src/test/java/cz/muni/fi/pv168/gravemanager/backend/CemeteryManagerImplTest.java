@@ -2,7 +2,9 @@ package cz.muni.fi.pv168.gravemanager.backend;
 
 import cz.muni.fi.pv168.common.DBUtils;
 import cz.muni.fi.pv168.common.IllegalEntityException;
+import cz.muni.fi.pv168.common.ServiceFailureException;
 import java.sql.SQLException;
+import java.util.function.Consumer;
 import javax.sql.DataSource;
 import org.apache.derby.jdbc.EmbeddedDataSource;
 import org.junit.After;
@@ -12,6 +14,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 /**
  *
@@ -436,4 +439,50 @@ public class CemeteryManagerImplTest {
     public void removeBodyFromGraveNotInDB() {
         manager.removeBodyFromGrave(b2, graveNotInDB);
     }
+
+    private void testExpectedServiceFailureException(Consumer<CemeteryManager> operation) throws SQLException {
+        SQLException sqlException = new SQLException();
+        DataSource failingDataSource = mock(DataSource.class);
+        when(failingDataSource.getConnection()).thenThrow(sqlException);
+        manager.setDataSource(failingDataSource);
+        assertThatThrownBy(() -> operation.accept(manager))
+                .isInstanceOf(ServiceFailureException.class)
+                .hasCause(sqlException);
+    }
+
+    @Test
+    public void findBodiesInGraveWithSqlExceptionThrown() throws SQLException {
+        testExpectedServiceFailureException((m) -> m.findBodiesInGrave(g1));
+    }
+
+    @Test
+    public void findEmptyGravesWithSqlExceptionThrown() throws SQLException {
+        testExpectedServiceFailureException((m) -> m.findEmptyGraves());
+    }
+
+    @Test
+    public void findGraveWithBodyWithSqlExceptionThrown() throws SQLException {
+        testExpectedServiceFailureException((m) -> m.findGraveWithBody(b1));
+    }
+
+    @Test
+    public void findGravesWithSomeFreeSpaceWithSqlExceptionThrown() throws SQLException {
+        testExpectedServiceFailureException((m) -> m.findGravesWithSomeFreeSpace());
+    }
+
+    @Test
+    public void findUnburiedBodiesWithSqlExceptionThrown() throws SQLException {
+        testExpectedServiceFailureException((m) -> m.findUnburiedBodies());
+    }
+
+    @Test
+    public void putBodyIntoGraveWithSqlExceptionThrown() throws SQLException {
+        testExpectedServiceFailureException((m) -> m.putBodyIntoGrave(b1, g1));
+    }
+
+    @Test
+    public void removeBodyIntoGraveWithSqlExceptionThrown() throws SQLException {
+        testExpectedServiceFailureException((m) -> m.removeBodyFromGrave(b1, g1));
+    }
+
 }
