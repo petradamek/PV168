@@ -1,15 +1,16 @@
 package cz.muni.fi.pv168.gravemanager.backend;
 
 import java.sql.Date;
+import java.util.Objects;
 
 /**
  * This entity represents Body. Body has some name, date of born, date of death,
  * and flag, if it is vampire.
- * 
+ *
  * @author Petr Adámek
  */
 public class Body {
- 
+
     private Long id;
     private String name;
     private java.sql.Date born;
@@ -58,9 +59,24 @@ public class Body {
 
     @Override
     public String toString() {
-        return "Body{" + "id=" + id + '}';
+        return "Body{"
+                + "id=" + id
+                + ", name=" + name
+                + ", born=" + born
+                + ", died=" + died
+                + ", vampire=" + vampire
+                + '}';
     }
 
+    /**
+     * Returns true if obj represents the same body. Two objects are considered
+     * to represent the same body when both are instances of {@link Body} class,
+     * both have assigned some id and this id is the same.
+     *
+     *
+     * @param obj the reference object with which to compare.
+     * @return true if obj represents the same body.
+     */
     @Override
     public boolean equals(Object obj) {
         if (obj == null) {
@@ -70,17 +86,15 @@ public class Body {
             return false;
         }
         final Body other = (Body) obj;
-        if (this.id != other.id && (this.id == null || !this.id.equals(other.id))) {
+        if (obj != this && this.id == null) {
             return false;
         }
-        return true;
+        return Objects.equals(this.id, other.id);
     }
 
     @Override
     public int hashCode() {
-        int hash = 5;
-        hash = 23 * hash + (this.id != null ? this.id.hashCode() : 0);
-        return hash;
+        return Objects.hash(this.id);
     }
-        
+
 }

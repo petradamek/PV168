@@ -1,20 +1,22 @@
 package cz.muni.fi.pv168.gravemanager.backend;
 
+import java.util.Objects;
+
 /**
- * This entity class represents Grave. Grave have some capacity, position 
- * specified with row and column, and it could have some note. One grave could 
+ * This entity class represents Grave. Grave have some capacity, position
+ * specified with row and column, and it could have some note. One grave could
  * contain zero or more bodies up to its capacity.
- * 
+ *
  * @author Petr Adámek
  */
 public class Grave {
-    
+
     private Long id;
     private int column;
     private int row;
     private int capacity;
     private String note;
-    
+
     public int getCapacity() {
         return capacity;
     }
@@ -54,12 +56,27 @@ public class Grave {
     public void setRow(int row) {
         this.row = row;
     }
-    
+
     @Override
     public String toString() {
-        return "Grave{" + "id=" + id + '}';
+        return "Grave{"
+                + "id=" + id
+                + ", column=" + column
+                + ", row=" + row
+                + ", capacity=" + capacity
+                + ", note=" + note
+                + '}';
     }
 
+    /**
+     * Returns true if obj represents the same grave. Two objects are considered
+     * to represent the same grave when both are instances of {@link Grave}
+     * class, both have assigned some id and this id is the same.
+     *
+     *
+     * @param obj the reference object with which to compare.
+     * @return true if obj represents the same grave.
+     */
     @Override
     public boolean equals(Object obj) {
         if (obj == null) {
@@ -69,17 +86,15 @@ public class Grave {
             return false;
         }
         final Grave other = (Grave) obj;
-        if (this.id != other.id && (this.id == null || !this.id.equals(other.id))) {
+        if (obj != this && this.id == null) {
             return false;
         }
-        return true;
+        return Objects.equals(this.id, other.id);
     }
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 97 * hash + (this.id != null ? this.id.hashCode() : 0);
-        return hash;
-    }    
-    
+        return Objects.hashCode(this.id);
+    }
+
 }
