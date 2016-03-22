@@ -2,8 +2,6 @@ package cz.muni.fi.pv168.gravemanager.backend;
 
 import cz.muni.fi.pv168.common.DBUtils;
 import cz.muni.fi.pv168.common.IllegalEntityException;
-import static cz.muni.fi.pv168.gravemanager.backend.BodyManagerImplTest.newBody;
-import static cz.muni.fi.pv168.gravemanager.backend.GraveManagerImplTest.newGrave;
 import java.sql.SQLException;
 import javax.sql.DataSource;
 import org.apache.derby.jdbc.EmbeddedDataSource;
@@ -43,15 +41,15 @@ public class CemeteryManagerImplTest {
 
     private void prepareTestData() {
 
-        g1 = newGrave(1, 2, 1, "Grave 1");
-        g2 = newGrave(10, 11, 2, "Grave 2");
-        g3 = newGrave(2, 2, 3, "Grave 3");
+        g1 = new GraveBuilder().column(1).row(2).capacity(1).note("Grave 1").build();
+        g2 = new GraveBuilder().column(8).row(9).capacity(2).note("Grave 2").build();
+        g3 = new GraveBuilder().column(2).row(2).capacity(3).note("Grave 3").build();
 
-        b1 = newBody("Body 1", null, null, false);
-        b2 = newBody("Body 2", null, null, true);
-        b3 = newBody("Body 3", null, null, false);
-        b4 = newBody("Body 4", null, null, false);
-        b5 = newBody("Body 5", null, null, false);
+        b1 = new BodyBuilder().name("Body 1").build();
+        b2 = new BodyBuilder().name("Body 2").build();
+        b3 = new BodyBuilder().name("Body 3").build();
+        b4 = new BodyBuilder().name("Body 4").build();
+        b5 = new BodyBuilder().name("Body 5").build();
 
         bodyManager.createBody(b1);
         bodyManager.createBody(b2);
@@ -63,13 +61,13 @@ public class CemeteryManagerImplTest {
         graveManager.createGrave(g2);
         graveManager.createGrave(g3);
 
-        graveWithNullId = newGrave(1,1,1,"Grave with null id");
-        graveNotInDB = newGrave(1,1,1,"Grave not in DB");
-        graveNotInDB.setId(g3.getId() + 100);
-        bodyWithNullId = newBody("Body with null id", null, null, true);
-        bodyNotInDB = newBody("Body not in DB", null, null, true);
-        bodyNotInDB.setId(b5.getId() + 100);
+        graveWithNullId = new GraveBuilder().id(null).build();
+        graveNotInDB = new GraveBuilder().id(g3.getId() + 100).build();
+        assertThat(graveManager.getGrave(graveNotInDB.getId())).isNull();
 
+        bodyWithNullId = new BodyBuilder().name("Body with null id").id(null).build();
+        bodyNotInDB = new BodyBuilder().name("Body not in DB").id(b5.getId() + 100).build();
+        assertThat(bodyManager.getBody(bodyNotInDB.getId())).isNull();
     }
 
     @Before

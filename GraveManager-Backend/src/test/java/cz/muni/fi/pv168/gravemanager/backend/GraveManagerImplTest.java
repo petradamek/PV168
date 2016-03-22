@@ -50,6 +50,24 @@ public class GraveManagerImplTest {
         DBUtils.executeSqlScript(ds,GraveManager.class.getResource("dropTables.sql"));
     }
 
+    public GraveBuilder sampleSmallGrave() {
+        return new GraveBuilder()
+                .id(null)
+                .column(12)
+                .row(13)
+                .capacity(1)
+                .note("Small Grave");
+    }
+
+    public GraveBuilder sampleBigGrave() {
+        return new GraveBuilder()
+                .id(null)
+                .column(22)
+                .row(27)
+                .capacity(6)
+                .note("Big Grave");
+    }
+
     @Test
     @Ignore
     public void todo() {
@@ -60,7 +78,7 @@ public class GraveManagerImplTest {
 
     @Test
     public void createGrave() {
-        Grave grave = newGrave(12,13,6,"Nice grave");
+        Grave grave = sampleSmallGrave().build();
         manager.createGrave(grave);
 
         Long graveId = grave.getId();
@@ -76,8 +94,8 @@ public class GraveManagerImplTest {
 
         assertThat(manager.findAllGraves()).isEmpty();
 
-        Grave g1 = newGrave(23,44,5,"Grave 1");
-        Grave g2 = newGrave(12,4,1,"Grave 2");
+        Grave g1 = sampleSmallGrave().build();
+        Grave g2 = sampleBigGrave().build();
 
         manager.createGrave(g1);
         manager.createGrave(g2);
@@ -98,8 +116,7 @@ public class GraveManagerImplTest {
     // Test exception with ExpectedException @Rule
     @Test
     public void createGraveWithExistingId() {
-        Grave grave = newGrave(12, 13, 6, "Nice grave");
-        grave.setId(1l);
+        Grave grave = sampleSmallGrave().id(1L).build();
         expectedException.expect(IllegalEntityException.class);
         manager.createGrave(grave);
     }
@@ -108,35 +125,35 @@ public class GraveManagerImplTest {
     // this requires Java 8 due to using lambda expression
     @Test
     public void createGraveWithNegativeColumn() {
-        Grave grave = newGrave(-1, 13, 6, "Nice grave");
+        Grave grave = sampleSmallGrave().column(-1).build();
         assertThatThrownBy(() -> manager.createGrave(grave))
                 .isInstanceOf(ValidationException.class);
     }
 
     @Test
     public void createGraveWithNegativeRow() {
-        Grave grave = newGrave(1, -1, 6, "Nice grave");
+        Grave grave = sampleSmallGrave().row(-1).build();
         expectedException.expect(ValidationException.class);
         manager.createGrave(grave);
     }
 
     @Test
     public void createGraveWithNegativeCapacity() {
-        Grave grave = newGrave(1, 1, -1, "Nice grave");
+        Grave grave = sampleSmallGrave().capacity(-1).build();
         expectedException.expect(ValidationException.class);
         manager.createGrave(grave);
     }
 
     @Test
     public void createGraveWithZeroCapacity() {
-        Grave grave = newGrave(1, 1, 0, "Nice grave");
+        Grave grave = sampleSmallGrave().capacity(0).build();
         expectedException.expect(ValidationException.class);
         manager.createGrave(grave);
     }
 
     @Test
     public void createGraveWithZeroColumn() {
-        Grave grave = newGrave(0, 13, 6, "Nice grave");
+        Grave grave = sampleSmallGrave().column(0).build();
         manager.createGrave(grave);
 
         assertThat(manager.getGrave(grave.getId()))
@@ -146,7 +163,7 @@ public class GraveManagerImplTest {
 
     @Test
     public void createGraveWithZeroRow() {
-        Grave grave = newGrave(12, 0, 6, "Nice grave");
+        Grave grave = sampleSmallGrave().row(0).build();
         manager.createGrave(grave);
 
         assertThat(manager.getGrave(grave.getId()))
@@ -156,7 +173,7 @@ public class GraveManagerImplTest {
 
     @Test
     public void createGraveWithNullNote() {
-        Grave grave = newGrave(12, 11, 6, null);
+        Grave grave = sampleSmallGrave().note(null).build();
         manager.createGrave(grave);
 
         assertThat(manager.getGrave(grave.getId()))
@@ -190,8 +207,8 @@ public class GraveManagerImplTest {
     }
 
     private void testUpdate(Consumer<Grave> updateOperation) {
-        Grave sourceGrave = newGrave(12, 13, 6, "Nice grave");
-        Grave anotherGrave = newGrave(18, 19, 100, "Another grave");
+        Grave sourceGrave = sampleSmallGrave().build();
+        Grave anotherGrave = sampleBigGrave().build();
         manager.createGrave(sourceGrave);
         manager.createGrave(anotherGrave);
 
@@ -212,25 +229,21 @@ public class GraveManagerImplTest {
 
     @Test
     public void updateGraveWithNullId() {
-        Grave grave = newGrave(12, 13, 6, "Nice grave");
-        manager.createGrave(grave);
-        grave.setId(null);
+        Grave grave = sampleSmallGrave().id(null).build();
         expectedException.expect(IllegalEntityException.class);
         manager.updateGrave(grave);
     }
 
     @Test
     public void updateGraveWithNonExistingId() {
-        Grave grave = newGrave(12, 13, 6, "Nice grave");
-        manager.createGrave(grave);
-        grave.setId(grave.getId() + 1);
+        Grave grave = sampleSmallGrave().id(1L).build();
         expectedException.expect(IllegalEntityException.class);
         manager.updateGrave(grave);
     }
 
     @Test
     public void updateGraveWithNegativeColumn() {
-        Grave grave = newGrave(12, 13, 6, "Nice grave");
+        Grave grave = sampleSmallGrave().build();
         manager.createGrave(grave);
         grave.setColumn(-1);
         expectedException.expect(ValidationException.class);
@@ -239,7 +252,7 @@ public class GraveManagerImplTest {
 
     @Test
     public void updateGraveWithNegativeRow() {
-        Grave grave = newGrave(12, 13, 6, "Nice grave");
+        Grave grave = sampleSmallGrave().build();
         manager.createGrave(grave);
         grave.setRow(-1);
         expectedException.expect(ValidationException.class);
@@ -248,7 +261,7 @@ public class GraveManagerImplTest {
 
     @Test
     public void updateGraveWithZeroCapacity() {
-        Grave grave = newGrave(12, 13, 6, "Nice grave");
+        Grave grave = sampleSmallGrave().build();
         manager.createGrave(grave);
         grave.setCapacity(0);
         expectedException.expect(ValidationException.class);
@@ -257,7 +270,7 @@ public class GraveManagerImplTest {
 
     @Test
     public void updateGraveWithNegativeCapacity() {
-        Grave grave = newGrave(12, 13, 6, "Nice grave");
+        Grave grave = sampleSmallGrave().build();
         manager.createGrave(grave);
         grave.setCapacity(-1);
         expectedException.expect(ValidationException.class);
@@ -267,8 +280,8 @@ public class GraveManagerImplTest {
     @Test
     public void deleteGrave() {
 
-        Grave g1 = newGrave(12,13,6,"Nice grave");
-        Grave g2 = newGrave(18,19,100,"Another record");
+        Grave g1 = sampleSmallGrave().build();
+        Grave g2 = sampleBigGrave().build();
         manager.createGrave(g1);
         manager.createGrave(g2);
 
@@ -289,27 +302,16 @@ public class GraveManagerImplTest {
 
     @Test
     public void deleteGraveWithNullId() {
-        Grave grave = newGrave(12, 13, 6, "Nice grave");
-        grave.setId(null);
+        Grave grave = sampleSmallGrave().id(null).build();
         expectedException.expect(IllegalEntityException.class);
         manager.deleteGrave(grave);
     }
 
     @Test
     public void deleteGraveWithNonExistingId() {
-        Grave grave = newGrave(12, 13, 6, "Nice grave");
-        grave.setId(1L);
+        Grave grave = sampleSmallGrave().id(1L).build();
         expectedException.expect(IllegalEntityException.class);
         manager.deleteGrave(grave);
-    }
-
-    static Grave newGrave(int column, int row, int capacity, String note) {
-        Grave grave = new Grave();
-        grave.setColumn(column);
-        grave.setRow(row);
-        grave.setCapacity(capacity);
-        grave.setNote(note);
-        return grave;
     }
 
 }

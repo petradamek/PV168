@@ -14,6 +14,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import static java.time.Month.*;
 import static org.assertj.core.api.Assertions.*;
 
 /**
@@ -50,13 +51,25 @@ public class BodyManagerImplTest {
         DBUtils.executeSqlScript(ds,GraveManager.class.getResource("dropTables.sql"));
     }
 
-    private Date date(String date) {
-        return Date.valueOf(date);
+    private BodyBuilder sampleBodyJoe() {
+        return new BodyBuilder()
+                .name("Joe from depot")
+                .born(1962,OCTOBER,21)
+                .died(2011,NOVEMBER,8)
+                .vampire(false);
+    }
+
+    private BodyBuilder sampleBodyBilly() {
+        return new BodyBuilder()
+                .name("Billy Bob")
+                .born(1921,FEBRUARY,6)
+                .died(2008,DECEMBER,11)
+                .vampire(true);
     }
 
     @Test
     public void createBody() {
-        Body body = newBody("Pepa z Depa",date("1962-10-21"),date("2011-11-08"),false);
+        Body body = sampleBodyJoe().build();
         manager.createBody(body);
 
         Long bodyId = body.getId();
@@ -72,15 +85,15 @@ public class BodyManagerImplTest {
 
         assertThat(manager.findAllBodies()).isEmpty();
 
-        Body b1 = newBody("Body 1",date("1929-10-12"),date("2011-09-30"),false);
-        Body b2 = newBody("Body 2",date("1962-01-21"),date("2001-12-01"),false);
+        Body joe = sampleBodyJoe().build();
+        Body billy = sampleBodyBilly().build();
 
-        manager.createBody(b1);
-        manager.createBody(b2);
+        manager.createBody(joe);
+        manager.createBody(billy);
 
         assertThat(manager.findAllBodies())
                 .usingFieldByFieldElementComparator()
-                .containsOnly(b1,b2);
+                .containsOnly(joe,billy);
     }
 
     // Test exception with expected parameter of @Test annotation
@@ -94,8 +107,9 @@ public class BodyManagerImplTest {
     // Test exception with ExpectedException @Rule
     @Test
     public void createBodyWithExistingId() {
-        Body body = newBody("Pepa z Depa",date("1962-10-21"),date("2011-11-08"),false);
-        body.setId(1l);
+        Body body = sampleBodyJoe()
+                .id(1L)
+                .build();
         expectedException.expect(IllegalEntityException.class);
         manager.createBody(body);
     }
@@ -104,7 +118,9 @@ public class BodyManagerImplTest {
     // this requires Java 8 due to using lambda expression
     @Test
     public void createBodyWithNullName() {
-        Body body = newBody(null,date("1962-10-21"),date("2011-11-08"),false);
+        Body body = sampleBodyJoe()
+                .name(null)
+                .build();
         assertThatThrownBy(() -> manager.createBody(body))
                 .isInstanceOf(ValidationException.class);
     }
@@ -113,7 +129,10 @@ public class BodyManagerImplTest {
     // Body died one day before born is not allowed ...
     @Test
     public void createBodyDeadBeforeBorn() {
-        Body body = newBody("Pepa z Depa",date("1962-10-21"),date("1962-10-20"),false);
+        Body body = sampleBodyJoe()
+                .born(1962,OCTOBER,21)
+                .died(1962,OCTOBER,20)
+                .build();
         expectedException.expect(ValidationException.class);
         manager.createBody(body);
     }
@@ -121,7 +140,10 @@ public class BodyManagerImplTest {
     // ... while the body died and born at the same day are allowed
     @Test
     public void createBodyBornAndDiedSameDay() {
-        Body body = newBody("Pepa z Depa",date("1962-10-21"),date("1962-10-21"),false);
+        Body body = sampleBodyJoe()
+                .born(1962,OCTOBER,21)
+                .died(1962,OCTOBER,21)
+                .build();
         manager.createBody(body);
 
         assertThat(manager.getBody(body.getId()))
@@ -131,7 +153,9 @@ public class BodyManagerImplTest {
 
     @Test
     public void createBodyNullBorn() {
-        Body body = newBody("Pepa z Depa",null,date("2011-11-08"),true);
+        Body body = sampleBodyJoe()
+                .born(null)
+                .build();
         manager.createBody(body);
         assertThat(manager.getBody(body.getId()))
                 .isNotNull()
@@ -140,7 +164,9 @@ public class BodyManagerImplTest {
 
     @Test
     public void createBodyNullDied() {
-        Body body = newBody("Pepa z Depa",date("1962-10-21"),null,true);
+        Body body = sampleBodyJoe()
+                .died(null)
+                .build();
         manager.createBody(body);
         assertThat(manager.getBody(body.getId()))
                 .isNotNull()
@@ -148,19 +174,19 @@ public class BodyManagerImplTest {
     }
 
     private void updateBody(Consumer<Body> updateOperation) {
-        Body sourceBody = newBody("Joe from depot",date("1962-10-21"),date("2011-11-08"),false);
-        Body anotherBody = newBody("Billy Bob",date("1921-02-06"),date("2008-12-11"),false);
-        manager.createBody(sourceBody);
-        manager.createBody(anotherBody);
+        Body joe = sampleBodyJoe().build();
+        Body billy = sampleBodyBilly().build();
+        manager.createBody(joe);
+        manager.createBody(billy);
 
-        updateOperation.accept(sourceBody);
+        updateOperation.accept(joe);
 
-        manager.updateBody(sourceBody);
-        assertThat(manager.getBody(sourceBody.getId()))
-                .isEqualToComparingFieldByField(sourceBody);
+        manager.updateBody(joe);
+        assertThat(manager.getBody(joe.getId()))
+                .isEqualToComparingFieldByField(joe);
         // Check if updates didn't affected other records
-        assertThat(manager.getBody(anotherBody.getId()))
-                .isEqualToComparingFieldByField(anotherBody);
+        assertThat(manager.getBody(billy.getId()))
+                .isEqualToComparingFieldByField(billy);
     }
 
     @Test
@@ -170,12 +196,12 @@ public class BodyManagerImplTest {
 
     @Test
     public void updateBodyBorn() {
-        updateBody((b) -> b.setBorn(date("1999-12-11")));
+        updateBody((b) -> b.setBorn(Date.valueOf("1999-12-11")));
     }
 
     @Test
     public void updateBodyDied() {
-        updateBody((b) -> b.setDied(date("1999-12-11")));
+        updateBody((b) -> b.setDied(Date.valueOf("1999-12-11")));
     }
 
     @Test
@@ -190,24 +216,21 @@ public class BodyManagerImplTest {
 
     @Test
     public void updateBodyWithNullId() {
-        Body body = newBody("Joe from depot",date("1962-10-21"),date("2011-11-08"),false);
+        Body body = sampleBodyJoe().id(null).build();
         expectedException.expect(IllegalEntityException.class);
         manager.updateBody(body);
     }
 
     @Test
     public void updateNonExistingBody() {
-        Body body = newBody("Joe from depot",date("1962-10-21"),date("2011-11-08"),false);
-        manager.createBody(body);
-        body.setId(body.getId() - 1);
-
+        Body body = sampleBodyJoe().id(1L).build();
         expectedException.expect(IllegalEntityException.class);
         manager.updateBody(body);
     }
 
     @Test
     public void updateBodyWithNullName() {
-        Body body = newBody("Joe from depot",date("1962-10-21"),date("2011-11-08"),false);
+        Body body = sampleBodyJoe().build();
         manager.createBody(body);
         body.setName(null);
 
@@ -217,9 +240,9 @@ public class BodyManagerImplTest {
 
     @Test
     public void updateBodyWithBornAfterDied() {
-        Body body = newBody("Joe from depot",date("1962-10-21"),date("2011-11-08"),false);
+        Body body = sampleBodyJoe().born(1962,OCTOBER,21).died(2011,NOVEMBER,8).build();
         manager.createBody(body);
-        body.setBorn(date("2011-11-09"));
+        body.setBorn(Date.valueOf("2011-11-09"));
 
         expectedException.expect(ValidationException.class);
         manager.updateBody(body);
@@ -228,18 +251,18 @@ public class BodyManagerImplTest {
     @Test
     public void deleteBody() {
 
-        Body b1 = newBody("Body 1",date("1929-10-12"),date("2011-09-30"),false);
-        Body b2 = newBody("Body 2",date("1962-01-21"),date("2001-12-01"),false);
-        manager.createBody(b1);
-        manager.createBody(b2);
+        Body joe = sampleBodyJoe().build();
+        Body billy = sampleBodyBilly().build();
+        manager.createBody(joe);
+        manager.createBody(billy);
 
-        assertThat(manager.getBody(b1.getId())).isNotNull();
-        assertThat(manager.getBody(b2.getId())).isNotNull();
+        assertThat(manager.getBody(joe.getId())).isNotNull();
+        assertThat(manager.getBody(billy.getId())).isNotNull();
 
-        manager.deleteBody(b1);
+        manager.deleteBody(joe);
 
-        assertThat(manager.getBody(b1.getId())).isNull();
-        assertThat(manager.getBody(b2.getId())).isNotNull();
+        assertThat(manager.getBody(joe.getId())).isNull();
+        assertThat(manager.getBody(billy.getId())).isNotNull();
 
     }
 
@@ -250,26 +273,16 @@ public class BodyManagerImplTest {
 
     @Test
     public void deleteBodyWithNullId() {
-        Body body = newBody("Body 1",date("1929-10-12"),date("2011-09-30"),false);
+        Body body = sampleBodyJoe().id(null).build();
         expectedException.expect(IllegalEntityException.class);
         manager.deleteBody(body);
     }
 
     @Test
     public void deleteNonExistingBody() {
-        Body body = newBody("Body 1",date("1929-10-12"),date("2011-09-30"),false);
-        body.setId(1L);
+        Body body = sampleBodyJoe().id(1L).build();
         expectedException.expect(IllegalEntityException.class);
         manager.deleteBody(body);
-    }
-
-    static Body newBody(String name, Date born, Date died, boolean vampire) {
-        Body body = new Body();
-        body.setName(name);
-        body.setBorn(born);
-        body.setDied(died);
-        body.setVampire(vampire);
-        return body;
     }
 
 }
