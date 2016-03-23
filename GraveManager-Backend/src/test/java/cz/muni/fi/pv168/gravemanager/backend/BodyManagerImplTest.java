@@ -53,7 +53,7 @@ public class BodyManagerImplTest {
         DBUtils.executeSqlScript(ds,GraveManager.class.getResource("dropTables.sql"));
     }
 
-    private BodyBuilder sampleBodyJoe() {
+    private BodyBuilder sampleJoeBodyBuilder() {
         return new BodyBuilder()
                 .name("Joe from depot")
                 .born(1962,OCTOBER,21)
@@ -61,7 +61,7 @@ public class BodyManagerImplTest {
                 .vampire(false);
     }
 
-    private BodyBuilder sampleBodyBilly() {
+    private BodyBuilder sampleBillyBodyBuilder() {
         return new BodyBuilder()
                 .name("Billy Bob")
                 .born(1921,FEBRUARY,6)
@@ -71,7 +71,7 @@ public class BodyManagerImplTest {
 
     @Test
     public void createBody() {
-        Body body = sampleBodyJoe().build();
+        Body body = sampleJoeBodyBuilder().build();
         manager.createBody(body);
 
         Long bodyId = body.getId();
@@ -87,8 +87,8 @@ public class BodyManagerImplTest {
 
         assertThat(manager.findAllBodies()).isEmpty();
 
-        Body joe = sampleBodyJoe().build();
-        Body billy = sampleBodyBilly().build();
+        Body joe = sampleJoeBodyBuilder().build();
+        Body billy = sampleBillyBodyBuilder().build();
 
         manager.createBody(joe);
         manager.createBody(billy);
@@ -109,7 +109,7 @@ public class BodyManagerImplTest {
     // Test exception with ExpectedException @Rule
     @Test
     public void createBodyWithExistingId() {
-        Body body = sampleBodyJoe()
+        Body body = sampleJoeBodyBuilder()
                 .id(1L)
                 .build();
         expectedException.expect(IllegalEntityException.class);
@@ -120,7 +120,7 @@ public class BodyManagerImplTest {
     // this requires Java 8 due to using lambda expression
     @Test
     public void createBodyWithNullName() {
-        Body body = sampleBodyJoe()
+        Body body = sampleJoeBodyBuilder()
                 .name(null)
                 .build();
         assertThatThrownBy(() -> manager.createBody(body))
@@ -131,7 +131,7 @@ public class BodyManagerImplTest {
     // Body died one day before born is not allowed ...
     @Test
     public void createBodyDeadBeforeBorn() {
-        Body body = sampleBodyJoe()
+        Body body = sampleJoeBodyBuilder()
                 .born(1962,OCTOBER,21)
                 .died(1962,OCTOBER,20)
                 .build();
@@ -142,7 +142,7 @@ public class BodyManagerImplTest {
     // ... while the body died and born at the same day are allowed
     @Test
     public void createBodyBornAndDiedSameDay() {
-        Body body = sampleBodyJoe()
+        Body body = sampleJoeBodyBuilder()
                 .born(1962,OCTOBER,21)
                 .died(1962,OCTOBER,21)
                 .build();
@@ -155,7 +155,7 @@ public class BodyManagerImplTest {
 
     @Test
     public void createBodyNullBorn() {
-        Body body = sampleBodyJoe()
+        Body body = sampleJoeBodyBuilder()
                 .born(null)
                 .build();
         manager.createBody(body);
@@ -166,7 +166,7 @@ public class BodyManagerImplTest {
 
     @Test
     public void createBodyNullDied() {
-        Body body = sampleBodyJoe()
+        Body body = sampleJoeBodyBuilder()
                 .died(null)
                 .build();
         manager.createBody(body);
@@ -176,8 +176,8 @@ public class BodyManagerImplTest {
     }
 
     private void updateBody(Consumer<Body> updateOperation) {
-        Body joe = sampleBodyJoe().build();
-        Body billy = sampleBodyBilly().build();
+        Body joe = sampleJoeBodyBuilder().build();
+        Body billy = sampleBillyBodyBuilder().build();
         manager.createBody(joe);
         manager.createBody(billy);
 
@@ -218,21 +218,21 @@ public class BodyManagerImplTest {
 
     @Test
     public void updateBodyWithNullId() {
-        Body body = sampleBodyJoe().id(null).build();
+        Body body = sampleJoeBodyBuilder().id(null).build();
         expectedException.expect(IllegalEntityException.class);
         manager.updateBody(body);
     }
 
     @Test
     public void updateNonExistingBody() {
-        Body body = sampleBodyJoe().id(1L).build();
+        Body body = sampleJoeBodyBuilder().id(1L).build();
         expectedException.expect(IllegalEntityException.class);
         manager.updateBody(body);
     }
 
     @Test
     public void updateBodyWithNullName() {
-        Body body = sampleBodyJoe().build();
+        Body body = sampleJoeBodyBuilder().build();
         manager.createBody(body);
         body.setName(null);
 
@@ -242,7 +242,7 @@ public class BodyManagerImplTest {
 
     @Test
     public void updateBodyWithBornAfterDied() {
-        Body body = sampleBodyJoe().born(1962,OCTOBER,21).died(2011,NOVEMBER,8).build();
+        Body body = sampleJoeBodyBuilder().born(1962,OCTOBER,21).died(2011,NOVEMBER,8).build();
         manager.createBody(body);
         body.setBorn(LocalDate.of(2011,NOVEMBER,9));
 
@@ -253,8 +253,8 @@ public class BodyManagerImplTest {
     @Test
     public void deleteBody() {
 
-        Body joe = sampleBodyJoe().build();
-        Body billy = sampleBodyBilly().build();
+        Body joe = sampleJoeBodyBuilder().build();
+        Body billy = sampleBillyBodyBuilder().build();
         manager.createBody(joe);
         manager.createBody(billy);
 
@@ -275,14 +275,14 @@ public class BodyManagerImplTest {
 
     @Test
     public void deleteBodyWithNullId() {
-        Body body = sampleBodyJoe().id(null).build();
+        Body body = sampleJoeBodyBuilder().id(null).build();
         expectedException.expect(IllegalEntityException.class);
         manager.deleteBody(body);
     }
 
     @Test
     public void deleteNonExistingBody() {
-        Body body = sampleBodyJoe().id(1L).build();
+        Body body = sampleJoeBodyBuilder().id(1L).build();
         expectedException.expect(IllegalEntityException.class);
         manager.deleteBody(body);
     }
@@ -299,27 +299,27 @@ public class BodyManagerImplTest {
 
     @Test
     public void createBodyWithSqlExceptionThrown() throws SQLException {
-        Body body = sampleBodyJoe().build();
+        Body body = sampleJoeBodyBuilder().build();
         testExpectedServiceFailureException((m) -> m.createBody(body));
     }
 
     @Test
     public void updateBodyWithSqlExceptionThrown() throws SQLException {
-        Body body = sampleBodyJoe().build();
+        Body body = sampleJoeBodyBuilder().build();
         manager.createBody(body);
         testExpectedServiceFailureException((m) -> m.updateBody(body));
     }
 
     @Test
     public void getBodyWithSqlExceptionThrown() throws SQLException {
-        Body body = sampleBodyJoe().build();
+        Body body = sampleJoeBodyBuilder().build();
         manager.createBody(body);
         testExpectedServiceFailureException((m) -> m.getBody(body.getId()));
     }
 
     @Test
     public void deleteBodyWithSqlExceptionThrown() throws SQLException {
-        Body body = sampleBodyJoe().build();
+        Body body = sampleJoeBodyBuilder().build();
         manager.createBody(body);
         testExpectedServiceFailureException((m) -> m.deleteBody(body));
     }
