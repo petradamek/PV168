@@ -19,7 +19,9 @@ public interface GraveManager {
      * @param grave grave to be created.
      * @throws IllegalArgumentException when grave is null, or grave has already 
      * assigned id.
-     * @throws ValidationException when grave breaks validation rules.
+     * @throws ValidationException when grave breaks validation rules (row is
+     * negative number, column is negative number or capacity is not positive
+     * number greater than zero).
      * @throws IllegalEntityException when grave has already assigned id.
      * @throws ServiceFailureException when db operation fails.
      */
@@ -40,7 +42,9 @@ public interface GraveManager {
      * 
      * @param grave updated grave to be stored into database.
      * @throws IllegalArgumentException when grave is null, or grave has null id.
-     * @throws ValidationException when grave breaks validation rules.
+     * @throws ValidationException when grave breaks validation rules (row is
+     * negative number, column is negative number or capacity is not positive
+     * number greater than zero).
      * @throws IllegalEntityException when grave has null id or does not exist in the database
      * @throws ServiceFailureException when db operation fails.
      */

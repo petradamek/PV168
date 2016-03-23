@@ -19,6 +19,8 @@ public interface BodyManager {
      * @param body body to be created.
      * @throws IllegalArgumentException when body is null.
      * @throws IllegalEntityException when body has already assigned id.
+     * @throws ValidationException when body breaks validation rules (name is
+     * null, gender is null or born is not before died).
      * @throws ServiceFailureException when db operation fails.
      */
     void createBody(Body body) throws ServiceFailureException, ValidationException, IllegalEntityException;
@@ -39,6 +41,8 @@ public interface BodyManager {
      * @param body updated body to be stored into database.
      * @throws IllegalArgumentException when body is null.
      * @throws IllegalEntityException when body has null id or does not exist in the database
+     * @throws ValidationException when body breaks validation rules (name is
+     * null, gender is null or born is not before died).
      * @throws ServiceFailureException when db operation fails.
      */
     void updateBody(Body body) throws ServiceFailureException, ValidationException, IllegalEntityException;
