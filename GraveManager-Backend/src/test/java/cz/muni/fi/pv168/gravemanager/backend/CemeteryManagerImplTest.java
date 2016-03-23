@@ -1,28 +1,27 @@
 package cz.muni.fi.pv168.gravemanager.backend;
 
-import cz.muni.fi.pv168.common.DBUtils;
-import cz.muni.fi.pv168.common.IllegalEntityException;
-import cz.muni.fi.pv168.common.ServiceFailureException;
+import cz.muni.fi.pv168.common.*;
 import java.sql.SQLException;
-import java.time.Clock;
-import java.time.LocalDateTime;
-import java.time.Month;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
 import javax.sql.DataSource;
 import org.apache.derby.jdbc.EmbeddedDataSource;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.ExpectedException;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+//------------------------------------------------------------------------------
+// IMPORTANT NOTE:
+// This test contains lots of comments to help you understand well all
+// implementation details. You are not expected to use such kind of comments
+// in your tests.
+//------------------------------------------------------------------------------
+
 /**
+ * Example test class for {@link CemeteryManagerImpl}.
  *
- * @author petr
+ * @author petr.adamek@bilysklep.cz
  */
 public class CemeteryManagerImplTest {
 
@@ -38,13 +37,40 @@ public class CemeteryManagerImplTest {
     // attribute annotated with @Rule annotation must be public :-(
     public ExpectedException expectedException = ExpectedException.none();
 
+    //--------------------------------------------------------------------------
+    // Test initialization
+    //--------------------------------------------------------------------------
+
     private static DataSource prepareDataSource() throws SQLException {
         EmbeddedDataSource ds = new EmbeddedDataSource();
-        //we will use in memory database
+        // we will use in memory database
         ds.setDatabaseName("memory:gravemgr-test");
+        // database is created automatically if it does not exist yet
         ds.setCreateDatabase("create");
         return ds;
     }
+
+    @Before
+    public void setUp() throws SQLException {
+        ds = prepareDataSource();
+        DBUtils.executeSqlScript(ds, GraveManager.class.getResource("createTables.sql"));
+        manager = new CemeteryManagerImpl();
+        manager.setDataSource(ds);
+        bodyManager = new BodyManagerImpl(Clock.fixed(NOW.toInstant(), NOW.getZone()));
+        bodyManager.setDataSource(ds);
+        graveManager = new GraveManagerImpl();
+        graveManager.setDataSource(ds);
+        prepareTestData();
+    }
+
+    @After
+    public void tearDown() throws SQLException {
+        DBUtils.executeSqlScript(ds, GraveManager.class.getResource("dropTables.sql"));
+    }
+
+    //--------------------------------------------------------------------------
+    // Preparing test data
+    //--------------------------------------------------------------------------
 
     private Grave g1, g2, g3, graveWithNullId, graveNotInDB;
     private Body b1, b2, b3, b4, b5, bodyWithNullId, bodyNotInDB;
@@ -80,24 +106,6 @@ public class CemeteryManagerImplTest {
         assertThat(bodyManager.getBody(bodyNotInDB.getId())).isNull();
     }
 
-    @Before
-    public void setUp() throws SQLException {
-        ds = prepareDataSource();
-        DBUtils.executeSqlScript(ds, GraveManager.class.getResource("createTables.sql"));
-        manager = new CemeteryManagerImpl();
-        manager.setDataSource(ds);
-        bodyManager = new BodyManagerImpl(Clock.fixed(NOW.toInstant(), NOW.getZone()));
-        bodyManager.setDataSource(ds);
-        graveManager = new GraveManagerImpl();
-        graveManager.setDataSource(ds);
-        prepareTestData();
-    }
-
-    @After
-    public void tearDown() throws SQLException {
-        DBUtils.executeSqlScript(ds, GraveManager.class.getResource("dropTables.sql"));
-    }
-
     @Test
     public void findGraveWithBody() {
 
@@ -116,6 +124,10 @@ public class CemeteryManagerImplTest {
         assertThat(manager.findGraveWithBody(b4)).isNull();
         assertThat(manager.findGraveWithBody(b5)).isNull();
     }
+
+    //--------------------------------------------------------------------------
+    // Tests for find* operations
+    //--------------------------------------------------------------------------
 
     @Test(expected = IllegalArgumentException.class)
     public void findGraveWithNullBody() {
@@ -204,6 +216,10 @@ public class CemeteryManagerImplTest {
                 .usingFieldByFieldElementComparator()
                 .containsOnly(g2,g3);
     }
+
+    //--------------------------------------------------------------------------
+    // Tests for CemeteryManager.putBodyIntoGrave(Body,Grave) operation
+    //--------------------------------------------------------------------------
 
     @Test
     public void putBodyIntoGrave() {
@@ -331,6 +347,10 @@ public class CemeteryManagerImplTest {
     public void putBodyIntoGraveNotInDB() {
         manager.putBodyIntoGrave(b2, graveNotInDB);
     }
+
+    //--------------------------------------------------------------------------
+    // Tests for CemeteryManager.removeBodyFromGrave(Body,Grave) operation
+    //--------------------------------------------------------------------------
 
     @Test
     public void removeBodyFromGrave() {

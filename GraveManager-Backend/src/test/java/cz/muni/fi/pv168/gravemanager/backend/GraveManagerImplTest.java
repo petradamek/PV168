@@ -1,38 +1,47 @@
 package cz.muni.fi.pv168.gravemanager.backend;
 
-import cz.muni.fi.pv168.common.DBUtils;
-import cz.muni.fi.pv168.common.IllegalEntityException;
-import cz.muni.fi.pv168.common.ServiceFailureException;
-import cz.muni.fi.pv168.common.ValidationException;
+import cz.muni.fi.pv168.common.*;
 import java.sql.SQLException;
 import javax.sql.DataSource;
 import org.apache.derby.jdbc.EmbeddedDataSource;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.ExpectedException;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+//------------------------------------------------------------------------------
+// IMPORTANT NOTE:
+// This test contains lots of comments to help you understand well all
+// implementation details. You are not expected to use such kind of comments
+// in your tests.
+//------------------------------------------------------------------------------
+
 /**
+ * Example test class for {@link GraveManagerImpl}.
  *
- * @author Petr Adámek
+ * @author petr.adamek@bilysklep.cz
  */
 public class GraveManagerImplTest {
 
     private GraveManagerImpl manager;
     private DataSource ds;
 
+    // ExpectedException is one possible mechanisms for testing if expected
+    // exception is thrown. See createGraveWithExistingId() for usage example.
     @Rule
     // attribute annotated with @Rule annotation must be public :-(
     public ExpectedException expectedException = ExpectedException.none();
 
+    //--------------------------------------------------------------------------
+    // Test initialization
+    //--------------------------------------------------------------------------
+
     private static DataSource prepareDataSource() throws SQLException {
         EmbeddedDataSource ds = new EmbeddedDataSource();
-        //we will use in memory database
+        // we will use in memory database
         ds.setDatabaseName("memory:gravemgr-test");
+        // database is created automatically if it does not exist yet
         ds.setCreateDatabase("create");
         return ds;
     }
@@ -47,8 +56,56 @@ public class GraveManagerImplTest {
 
     @After
     public void tearDown() throws SQLException {
+        // Drop tables after each test
         DBUtils.executeSqlScript(ds,GraveManager.class.getResource("dropTables.sql"));
     }
+
+    //--------------------------------------------------------------------------
+    // Preparing test data
+    //--------------------------------------------------------------------------
+
+    // We will need to create some Grave instances for testing purposes. We
+    // could create constructor or helper method for initializing all fields,
+    // but this is not well readable, especially for cases with multiple
+    // parameters of the same type:
+    //
+    // Grave grave = new Grave(12,13,1,"Small Grave"); // constructoor
+    // Grave grave = newGrave(12,13,1,"Small Grave");  // helper method
+    //
+    // To understand this code, you need to know or look, what is the order and
+    // meaning of parameters. And it will be difficult to maintain the code when
+    // some new attributes are introduced. Another option is to use set methods:
+    //
+    // Grave grave = new Grave();
+    // grave.setColumn(12);
+    // grave.setRow(13);
+    // grave.setCapacity(1);
+    // grave.setNote("Small Grave");
+    //
+    // This is better understandable, but it needs too much code to construct
+    // the object. Alternative solution is to use Builder pattern:
+    //
+    // Grave grave = new GraveBuilder().column(12).row(13).note("Small Grave").build();
+    //
+    // Advantage of builder pattern is compact syntax based on fluent API,
+    // clear assigment of values to attribute names and flexibility allowing to
+    // set only arbitrary subset of attributes (and keeping default values for
+    // others). Disadvantage of builder pattern is the need to create and
+    // maintain builder class. See Item 2 in Effective Java from Joshua Bloch
+    // for more details.
+    //
+    // To make creation of test objects even easier, we can prepare some
+    // pre-configured builders with some reasonable default attribute values
+    // (see sampleSmallGraveBuilder() and sampleBigGraveBuilder() bellow).
+    // These values can be changed by subsequent calls of appropriate builder
+    // method if needed.
+    //
+    // Grave graveWithExistingId = sampleSmallGraveBuilder().id(12L).build();
+    //
+    // This mechanism allows us to focus only to attributes important for given
+    // test and use some universal reasonable value for other attribute. For
+    // example, we don't need to use some specific attribute values for
+    // createGrave() test, this test works well with any valid values.
 
     private GraveBuilder sampleSmallGraveBuilder() {
         return new GraveBuilder()
@@ -67,6 +124,10 @@ public class GraveManagerImplTest {
                 .capacity(6)
                 .note("Big Grave");
     }
+
+    //--------------------------------------------------------------------------
+    // Tests for operations for creating and fetching graves
+    //--------------------------------------------------------------------------
 
     @Test
     public void createGrave() {
@@ -190,7 +251,7 @@ public class GraveManagerImplTest {
         // Performa the update operation ...
         graveForUpdate.setColumn(1);
 
-        // ... and save updated body to database
+        // ... and save updated grave to database
         manager.updateGrave(graveForUpdate);
 
         // Check if grave was properly updated

@@ -1,30 +1,28 @@
 package cz.muni.fi.pv168.gravemanager.backend;
 
-import cz.muni.fi.pv168.common.DBUtils;
-import cz.muni.fi.pv168.common.IllegalEntityException;
-import cz.muni.fi.pv168.common.ServiceFailureException;
-import cz.muni.fi.pv168.common.ValidationException;
+import cz.muni.fi.pv168.common.*;
 import java.sql.SQLException;
-import java.time.Clock;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
 import javax.sql.DataSource;
 import org.apache.derby.jdbc.EmbeddedDataSource;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.ExpectedException;
 
 import static java.time.Month.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+//------------------------------------------------------------------------------
+// IMPORTANT NOTE:
+// This test contains lots of comments to help you understand well all
+// implementation details. You are not expected to use such kind of comments
+// in your tests.
+//------------------------------------------------------------------------------
+
 /**
+ * Example test class for {@link BodyManagerImpl}.
  *
- * @author Petr Adámek
+ * @author petr.adamek@bilysklep.cz
  */
 public class BodyManagerImplTest {
 
@@ -36,14 +34,21 @@ public class BodyManagerImplTest {
     private final static ZonedDateTime NOW
             = LocalDateTime.of(2016, FEBRUARY, 29, 14, 00).atZone(ZoneId.of("UTC"));
 
+    // ExpectedException is one possible mechanisms for testing if expected
+    // exception is thrown. See createGraveWithExistingId() for usage example.
     @Rule
     // attribute annotated with @Rule annotation must be public :-(
     public ExpectedException expectedException = ExpectedException.none();
 
+    //--------------------------------------------------------------------------
+    // Test initialization
+    //--------------------------------------------------------------------------
+
     private static DataSource prepareDataSource() throws SQLException {
         EmbeddedDataSource ds = new EmbeddedDataSource();
-        //we will use in memory database
+        // we will use in memory database
         ds.setDatabaseName("memory:gravemgr-test");
+        // database is created automatically if it does not exist yet
         ds.setCreateDatabase("create");
         return ds;
     }
@@ -67,6 +72,57 @@ public class BodyManagerImplTest {
         DBUtils.executeSqlScript(ds,GraveManager.class.getResource("dropTables.sql"));
     }
 
+    //--------------------------------------------------------------------------
+    // Preparing test data
+    //--------------------------------------------------------------------------
+
+    // We will need to create some Body instances for testing purposes. We
+    // could create constructor or helper method for initializing all fields,
+    // but this is not well readable, especially for cases with multiple
+    // parameters of the same type:
+    //
+    // Body body = new Body("Joe",Gender.Male,LocalDate.of(1962,Month.OCTOBER,21),
+    //         LocalDate.of(2011,Month.NOVEMBER,8),false);   // constructor
+    // Body body = newBody("Joe",Gender.Male,LocalDate.of(1962,Month.OCTOBER,21),
+    //         LocalDate.of(2011,Month.NOVEMBER,8),false);   // helper method
+    //
+    // To understand this code, you need to know or look, what is the order and
+    // meaning of parameters. And it will be difficult to maintain the code when
+    // some new attributes are introduced. Another option is to use set methods:
+    //
+    // Body body = new Body();
+    // body.setName("Joe");
+    // body.setGender(Gender.MALE);
+    // body.setBorn(LocalDate.of(1962,OCTOBER,21));
+    // body.setDied(LocalDate.of(2011,NOVEMBER,8));
+    // body.setVampire(false);
+    //
+    // This is better understandable, but it needs too much code to construct
+    // the object. Alternative solution is to use Builder pattern:
+    //
+    // Body body = new BodyBuilder().name("Joe").gender(Gender.MALE)
+    //         .born(1962,OCTOBER,21).died(2011,NOVEMBER,8);
+    //
+    // Advantage of builder pattern is compact syntax based on fluent API,
+    // clear assigment of values to attribute names and flexibility allowing to
+    // set only arbitrary subset of attributes (and keeping default values for
+    // others). Disadvantage of builder pattern is the need to create and
+    // maintain builder class. See Item 2 in Effective Java from Joshua Bloch
+    // for more details.
+    //
+    // To make creation of test objects even easier, we can prepare some
+    // pre-configured builders with some reasonable default attribute values
+    // (see sampleJoeBodyBuilder() and sampleCatherineBodyBuilder() bellow).
+    // These values can be changed by subsequent calls of appropriate builder
+    // method if needed.
+    //
+    // Body bodyWithExistingId = sampleJoeBodyBuilder().id(12L).build();
+    //
+    // This mechanism allows us to focus only to attributes important for given
+    // test and use some universal reasonable value for other attribute. For
+    // example, we don't need to use some specific attribute values for
+    // createBody() test, this test works well with any valid values.
+
     private BodyBuilder sampleJoeBodyBuilder() {
         return new BodyBuilder()
                 .name("Joe from depot")
@@ -84,6 +140,10 @@ public class BodyManagerImplTest {
                 .died(2008,DECEMBER,11)
                 .vampire(true);
     }
+
+    //--------------------------------------------------------------------------
+    // Tests for operations for creating and fetching graves
+    //--------------------------------------------------------------------------
 
     @Test
     public void createBody() {
