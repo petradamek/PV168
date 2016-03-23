@@ -5,7 +5,8 @@ import java.util.Objects;
 
 /**
  * This entity represents Body. Body has some name, date of born, date of death,
- * and flag, if it is vampire.
+ * and flag, if it is vampire. Name and vampire are mandatory attributes, born
+ * and died are optional.
  *
  * @author Petr Adámek
  */

@@ -5,7 +5,8 @@ import java.util.Objects;
 /**
  * This entity class represents Grave. Grave have some capacity, position
  * specified with row and column, and it could have some note. One grave could
- * contain zero or more bodies up to its capacity.
+ * contain zero or more bodies up to its capacity. All parameters except of note
+ * are mandatory.
  *
  * @author Petr Adámek
  */
