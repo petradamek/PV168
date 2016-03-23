@@ -5,7 +5,6 @@ import cz.muni.fi.pv168.common.IllegalEntityException;
 import cz.muni.fi.pv168.common.ServiceFailureException;
 import cz.muni.fi.pv168.common.ValidationException;
 import java.sql.SQLException;
-import java.util.function.Consumer;
 import javax.sql.DataSource;
 import org.apache.derby.jdbc.EmbeddedDataSource;
 import org.junit.After;
@@ -172,48 +171,98 @@ public class GraveManagerImplTest {
         assertThat(manager.getGrave(grave.getId()))
                 .isNotNull()
                 .isEqualToComparingFieldByField(grave);
-}
+    }
+
+    //--------------------------------------------------------------------------
+    // Tests for GraveManager.updateGrave(Grave) operation
+    //--------------------------------------------------------------------------
 
     @Test
     public void updateGraveColumn() {
-        testUpdate((g) -> g.setColumn(1));
+        // Let us create two graves, one will be used for testing the update
+        // and another one will be used for verification that other objects are
+        // not affected by update operation
+        Grave graveForUpdate = sampleSmallGraveBuilder().build();
+        Grave anotherGrave = sampleBigGraveBuilder().build();
+        manager.createGrave(graveForUpdate);
+        manager.createGrave(anotherGrave);
+
+        // Performa the update operation ...
+        graveForUpdate.setColumn(1);
+
+        // ... and save updated body to database
+        manager.updateGrave(graveForUpdate);
+
+        // Check if grave was properly updated
+        assertThat(manager.getGrave(graveForUpdate.getId()))
+                .isEqualToComparingFieldByField(graveForUpdate);
+        // Check if updates didn't affected other records
+        assertThat(manager.getGrave(anotherGrave.getId()))
+                .isEqualToComparingFieldByField(anotherGrave);
     }
 
-    @Test
-    public void updateGraveRow() {
-        testUpdate((g) -> g.setRow(3));
+    // Now we want to test also other update operations. We could do it the same
+    // way as in updateGraveColumn(), but we would get couple of almost the same
+    // test methods, which would differ from each other only in single line
+    // with update operation. To avoid duplicit code and make the test better
+    // maintainable, we need to separate the update operation from the test
+    // method and to let us call test method multiple times with differen
+    // update operation.
+
+    // Let start with functional interface which will represent update operation
+    // BTW, we could use standard Consumer<T> functional interface (and I would
+    // probably do it in real test), but I decided to define my own interface to
+    // make the test better understandable
+    @FunctionalInterface
+    private static interface Operation<T> {
+        void callOn(T subjectOfOperation);
     }
 
-    @Test
-    public void updateGraveCapacity() {
-        testUpdate((g) -> g.setCapacity(5));
-    }
-
-    @Test
-    public void updateGraveNote() {
-        testUpdate((g) -> g.setNote("Not so nice grave"));
-    }
-
-    @Test
-    public void updateGraveNoteToNull() {
-        testUpdate((g) -> g.setNote(null));
-    }
-
-    private void testUpdate(Consumer<Grave> updateOperation) {
+    // The next step is implementation of generic test method. This method will
+    // perform update test with given update operation.
+    // The method is almost the same as updateGraveColumn(), the only difference
+    // is the line with calling given updateOperation.
+    private void testUpdateGrave(Operation<Grave> updateOperation) {
         Grave sourceGrave = sampleSmallGraveBuilder().build();
         Grave anotherGrave = sampleBigGraveBuilder().build();
         manager.createGrave(sourceGrave);
         manager.createGrave(anotherGrave);
 
-        updateOperation.accept(sourceGrave);
-        manager.updateGrave(sourceGrave);
+        updateOperation.callOn(sourceGrave);
 
+        manager.updateGrave(sourceGrave);
         assertThat(manager.getGrave(sourceGrave.getId()))
                 .isEqualToComparingFieldByField(sourceGrave);
         // Check if updates didn't affected other records
         assertThat(manager.getGrave(anotherGrave.getId()))
                 .isEqualToComparingFieldByField(anotherGrave);
     }
+
+    // Now we will call testUpdateGrave(...) method with different update
+    // operations. Update operation is defined with Lambda expression.
+
+    @Test
+    public void updateGraveRow() {
+        testUpdateGrave((grave) -> grave.setRow(3));
+    }
+
+    @Test
+    public void updateGraveCapacity() {
+        testUpdateGrave((grave) -> grave.setCapacity(5));
+    }
+
+    @Test
+    public void updateGraveNote() {
+        testUpdateGrave((grave) -> grave.setNote("Not so nice grave"));
+    }
+
+    @Test
+    public void updateGraveNoteToNull() {
+        testUpdateGrave((grave) -> grave.setNote(null));
+    }
+
+    // Test also if attemtpt to call update with invalid grave throws
+    // the correct exception.
 
     @Test(expected = IllegalArgumentException.class)
     public void updateNullGrave() {
@@ -270,6 +319,10 @@ public class GraveManagerImplTest {
         manager.updateGrave(grave);
     }
 
+    //--------------------------------------------------------------------------
+    // Tests for GraveManager.deleteGrave(Grave) operation
+    //--------------------------------------------------------------------------
+
     @Test
     public void deleteGrave() {
 
@@ -287,6 +340,9 @@ public class GraveManagerImplTest {
         assertThat(manager.getGrave(g2.getId())).isNotNull();
 
     }
+
+    // Test also if attemtpt to call delete with invalid parameter throws
+    // the correct exception.
 
     @Test(expected = IllegalArgumentException.class)
     public void deleteNullGrave() {
@@ -307,46 +363,74 @@ public class GraveManagerImplTest {
         manager.deleteGrave(grave);
     }
 
-    private void testExpectedServiceFailureException(Consumer<GraveManager> operation) throws SQLException {
+    //--------------------------------------------------------------------------
+    // Tests if GraveManager methods throws ServiceFailureException in case of
+    // DB operation failure
+    //--------------------------------------------------------------------------
+
+    @Test
+    public void createGraveWithSqlExceptionThrown() throws SQLException {
+        // Create sqlException, which will be thrown by our DataSource mock
+        // object to simulate DB operation failure
+        SQLException sqlException = new SQLException();
+        // Create DataSource mock object
+        DataSource failingDataSource = mock(DataSource.class);
+        // Instruct our DataSource mock object to throw our sqlException when
+        // DataSource.getConnection() method is called.
+        when(failingDataSource.getConnection()).thenThrow(sqlException);
+        // Configure our manager to use DataSource mock object
+        manager.setDataSource(failingDataSource);
+
+        // Create Grave instance for our test
+        Grave grave = sampleSmallGraveBuilder().build();
+
+        // Try to call Manager.createGrave(Grave) method and expect that
+        // exception will be thrown
+        assertThatThrownBy(() -> manager.createGrave(grave))
+                // Check that thrown exception is ServiceFailureException
+                .isInstanceOf(ServiceFailureException.class)
+                // Check if cause is properly set
+                .hasCause(sqlException);
+    }
+
+    // Now we want to test also other methods of GraveManager. To avoid having
+    // couple of method with lots of duplicit code, we will use the similar
+    // approach as with testUpdateGrave(Operation) method.
+
+    private void testExpectedServiceFailureException(Operation<GraveManager> operation) throws SQLException {
         SQLException sqlException = new SQLException();
         DataSource failingDataSource = mock(DataSource.class);
         when(failingDataSource.getConnection()).thenThrow(sqlException);
         manager.setDataSource(failingDataSource);
-        assertThatThrownBy(() -> operation.accept(manager))
+        assertThatThrownBy(() -> operation.callOn(manager))
                 .isInstanceOf(ServiceFailureException.class)
                 .hasCause(sqlException);
-    }
-
-    @Test
-    public void createGraveWithSqlExceptionThrown() throws SQLException {
-        Grave grave = sampleSmallGraveBuilder().build();
-        testExpectedServiceFailureException((m) -> m.createGrave(grave));
     }
 
     @Test
     public void updateGraveWithSqlExceptionThrown() throws SQLException {
         Grave grave = sampleSmallGraveBuilder().build();
         manager.createGrave(grave);
-        testExpectedServiceFailureException((m) -> m.updateGrave(grave));
+        testExpectedServiceFailureException((graveManager) -> graveManager.updateGrave(grave));
     }
 
     @Test
     public void getGraveWithSqlExceptionThrown() throws SQLException {
         Grave grave = sampleSmallGraveBuilder().build();
         manager.createGrave(grave);
-        testExpectedServiceFailureException((m) -> m.getGrave(grave.getId()));
+        testExpectedServiceFailureException((graveManager) -> graveManager.getGrave(grave.getId()));
     }
 
     @Test
     public void deleteGraveWithSqlExceptionThrown() throws SQLException {
         Grave grave = sampleSmallGraveBuilder().build();
         manager.createGrave(grave);
-        testExpectedServiceFailureException((m) -> m.deleteGrave(grave));
+        testExpectedServiceFailureException((graveManager) -> graveManager.deleteGrave(grave));
     }
 
     @Test
     public void findAllGravesWithSqlExceptionThrown() throws SQLException {
-        testExpectedServiceFailureException((m) -> m.findAllGraves());
+        testExpectedServiceFailureException((graveManager) -> graveManager.findAllGraves());
     }
 
 }

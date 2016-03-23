@@ -10,7 +10,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.function.Consumer;
 import javax.sql.DataSource;
 import org.apache.derby.jdbc.EmbeddedDataSource;
 import org.junit.After;
@@ -249,46 +248,96 @@ public class BodyManagerImplTest {
                 .isEqualToComparingFieldByField(body);
     }
 
-    private void updateBody(Consumer<Body> updateOperation) {
-        Body joe = sampleJoeBodyBuilder().build();
-        Body catherine = sampleCatherineBodyBuilder().build();
-        manager.createBody(joe);
-        manager.createBody(catherine);
-
-        updateOperation.accept(joe);
-
-        manager.updateBody(joe);
-        assertThat(manager.getBody(joe.getId()))
-                .isEqualToComparingFieldByField(joe);
-        // Check if updates didn't affected other records
-        assertThat(manager.getBody(catherine.getId()))
-                .isEqualToComparingFieldByField(catherine);
-    }
+    //--------------------------------------------------------------------------
+    // Tests for BodyManager.updateBody(Body) operation
+    //--------------------------------------------------------------------------
 
     @Test
     public void updateBodyName() {
-        updateBody((b) -> b.setName("Pepik"));
+        // Let us create two bodies, one will be used for testing the update
+        // and another one will be used for verification that other objects are
+        // not affected by update operation
+        Body bodyForUpdate = sampleJoeBodyBuilder().build();
+        Body anotherBody = sampleCatherineBodyBuilder().build();
+        manager.createBody(bodyForUpdate);
+        manager.createBody(anotherBody);
+
+        // Performa the update operation ...
+        bodyForUpdate.setName("New Name");
+
+        // ... and save updated body to database
+        manager.updateBody(bodyForUpdate);
+
+        // Check if body was properly updated
+        assertThat(manager.getBody(bodyForUpdate.getId()))
+                .isEqualToComparingFieldByField(bodyForUpdate);
+        // Check if updates didn't affected other records
+        assertThat(manager.getBody(anotherBody.getId()))
+                .isEqualToComparingFieldByField(anotherBody);
     }
+
+    // Now we want to test also other update operations. We could do it the same
+    // way as in updateBodyName(), but we would get couple of almost the same
+    // test methods, which would differ from each other only in single line
+    // with update operation. To avoid duplicit code and make the test better
+    // maintainable, we need to separate the update operation from the test
+    // method and to let us call test method multiple times with differen
+    // update operation.
+
+    // Let start with functional interface which will represent update operation
+    // BTW, we could use standard Consumer<T> functional interface (and I would
+    // probably do it in real test), but I decided to define my own interface to
+    // make the test better understandable
+    @FunctionalInterface
+    private static interface Operation<T> {
+        void callOn(T subjectOfOperation);
+    }
+
+    // The next step is implementation of generic test method. This method will
+    // perform update test with given update operation.
+    // The method is almost the same as updateBodyName(), the only difference is
+    // the line with calling given updateOperation.
+    private void testUpdateBody(Operation<Body> updateOperation) {
+        Body bodyForUpdate = sampleJoeBodyBuilder().build();
+        Body anotherBody = sampleCatherineBodyBuilder().build();
+        manager.createBody(bodyForUpdate);
+        manager.createBody(anotherBody);
+
+        updateOperation.callOn(bodyForUpdate);
+
+        manager.updateBody(bodyForUpdate);
+        assertThat(manager.getBody(bodyForUpdate.getId()))
+                .isEqualToComparingFieldByField(bodyForUpdate);
+        // Check if updates didn't affected other records
+        assertThat(manager.getBody(anotherBody.getId()))
+                .isEqualToComparingFieldByField(anotherBody);
+    }
+
+    // Now we will call testUpdateBody(...) method with different update
+    // operations. Update operation is defined with Lambda expression.
 
     @Test
     public void updateGender() {
-        updateBody((b) -> b.setGender(Gender.FEMALE));
+        testUpdateBody((body) -> body.setGender(Gender.FEMALE));
     }
 
     @Test
     public void updateBodyBorn() {
-        updateBody((b) -> b.setBorn(LocalDate.of(1999,DECEMBER,11)));
+        testUpdateBody((body) -> body.setBorn(LocalDate.of(1999,DECEMBER,11)));
     }
 
     @Test
     public void updateBodyDied() {
-        updateBody((b) -> b.setDied(LocalDate.of(1999,DECEMBER,12)));
+        testUpdateBody((body) -> body.setDied(LocalDate.of(1999,DECEMBER,12)));
     }
 
     @Test
     public void updateBodyVampire() {
-        updateBody((b) -> b.setVampire(true));
+        testUpdateBody((body) -> body.setVampire(true));
     }
+
+    // Test also if attemtpt to call update with invalid body throws
+    // the correct exception.
 
     @Test(expected = IllegalArgumentException.class)
     public void updateNullBody() {
@@ -339,6 +388,10 @@ public class BodyManagerImplTest {
         manager.updateBody(body);
     }
 
+    //--------------------------------------------------------------------------
+    // Tests for BodyManager.deleteBody(Body) operation
+    //--------------------------------------------------------------------------
+
     @Test
     public void deleteBody() {
 
@@ -356,6 +409,9 @@ public class BodyManagerImplTest {
         assertThat(manager.getBody(catherine.getId())).isNotNull();
 
     }
+
+    // Test also if attemtpt to call delete with invalid parameter throws
+    // the correct exception.
 
     @Test(expected = IllegalArgumentException.class)
     public void deleteNullBody() {
@@ -376,46 +432,74 @@ public class BodyManagerImplTest {
         manager.deleteBody(body);
     }
 
-    private void testExpectedServiceFailureException(Consumer<BodyManager> operation) throws SQLException {
+    //--------------------------------------------------------------------------
+    // Tests if BodyManager methods throws ServiceFailureException in case of
+    // DB operation failure
+    //--------------------------------------------------------------------------
+
+    @Test
+    public void createBodyWithSqlExceptionThrown() throws SQLException {
+        // Create sqlException, which will be thrown by our DataSource mock
+        // object to simulate DB operation failure
+        SQLException sqlException = new SQLException();
+        // Create DataSource mock object
+        DataSource failingDataSource = mock(DataSource.class);
+        // Instruct our DataSource mock object to throw our sqlException when
+        // DataSource.getConnection() method is called.
+        when(failingDataSource.getConnection()).thenThrow(sqlException);
+        // Configure our manager to use DataSource mock object
+        manager.setDataSource(failingDataSource);
+
+        // Create Body instance for our test
+        Body body = sampleJoeBodyBuilder().build();
+
+        // Try to call Manager.createBody(Body) method and expect that exception
+        // will be thrown
+        assertThatThrownBy(() -> manager.createBody(body))
+                // Check that thrown exception is ServiceFailureException
+                .isInstanceOf(ServiceFailureException.class)
+                // Check if cause is properly set
+                .hasCause(sqlException);
+    }
+
+    // Now we want to test also other methods of BodyManager. To avoid having
+    // couple of method with lots of duplicit code, we will use the similar
+    // approach as with testUpdateBody(Operation) method.
+
+    private void testExpectedServiceFailureException(Operation<BodyManager> operation) throws SQLException {
         SQLException sqlException = new SQLException();
         DataSource failingDataSource = mock(DataSource.class);
         when(failingDataSource.getConnection()).thenThrow(sqlException);
         manager.setDataSource(failingDataSource);
-        assertThatThrownBy(() -> operation.accept(manager))
+        assertThatThrownBy(() -> operation.callOn(manager))
                 .isInstanceOf(ServiceFailureException.class)
                 .hasCause(sqlException);
-    }
-
-    @Test
-    public void createBodyWithSqlExceptionThrown() throws SQLException {
-        Body body = sampleJoeBodyBuilder().build();
-        testExpectedServiceFailureException((m) -> m.createBody(body));
     }
 
     @Test
     public void updateBodyWithSqlExceptionThrown() throws SQLException {
         Body body = sampleJoeBodyBuilder().build();
         manager.createBody(body);
-        testExpectedServiceFailureException((m) -> m.updateBody(body));
+        testExpectedServiceFailureException((bodyManager) -> bodyManager.updateBody(body));
     }
 
     @Test
     public void getBodyWithSqlExceptionThrown() throws SQLException {
         Body body = sampleJoeBodyBuilder().build();
         manager.createBody(body);
-        testExpectedServiceFailureException((m) -> m.getBody(body.getId()));
+        testExpectedServiceFailureException((bodyManager) -> bodyManager.getBody(body.getId()));
     }
 
     @Test
     public void deleteBodyWithSqlExceptionThrown() throws SQLException {
         Body body = sampleJoeBodyBuilder().build();
         manager.createBody(body);
-        testExpectedServiceFailureException((m) -> m.deleteBody(body));
+        testExpectedServiceFailureException((bodyManager) -> bodyManager.deleteBody(body));
     }
 
     @Test
     public void findAllBodiesWithSqlExceptionThrown() throws SQLException {
-        testExpectedServiceFailureException((m) -> m.findAllBodies());
+        testExpectedServiceFailureException((bodyManager) -> bodyManager.findAllBodies());
     }
 
 }

@@ -9,7 +9,6 @@ import java.time.LocalDateTime;
 import java.time.Month;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.function.Consumer;
 import javax.sql.DataSource;
 import org.apache.derby.jdbc.EmbeddedDataSource;
 import org.junit.After;
@@ -448,49 +447,59 @@ public class CemeteryManagerImplTest {
         manager.removeBodyFromGrave(b2, graveNotInDB);
     }
 
-    private void testExpectedServiceFailureException(Consumer<CemeteryManager> operation) throws SQLException {
+    //--------------------------------------------------------------------------
+    // Tests if GraveManager methods throws ServiceFailureException in case of
+    // DB operation failure
+    //--------------------------------------------------------------------------
+
+    @FunctionalInterface
+    private static interface Operation<T> {
+        void callOn(T subjectOfOperation);
+    }
+
+    private void testExpectedServiceFailureException(Operation<CemeteryManager> operation) throws SQLException {
         SQLException sqlException = new SQLException();
         DataSource failingDataSource = mock(DataSource.class);
         when(failingDataSource.getConnection()).thenThrow(sqlException);
         manager.setDataSource(failingDataSource);
-        assertThatThrownBy(() -> operation.accept(manager))
+        assertThatThrownBy(() -> operation.callOn(manager))
                 .isInstanceOf(ServiceFailureException.class)
                 .hasCause(sqlException);
     }
 
     @Test
     public void findBodiesInGraveWithSqlExceptionThrown() throws SQLException {
-        testExpectedServiceFailureException((m) -> m.findBodiesInGrave(g1));
+        testExpectedServiceFailureException((cemeteryManager) -> cemeteryManager.findBodiesInGrave(g1));
     }
 
     @Test
     public void findEmptyGravesWithSqlExceptionThrown() throws SQLException {
-        testExpectedServiceFailureException((m) -> m.findEmptyGraves());
+        testExpectedServiceFailureException((cemeteryManager) -> cemeteryManager.findEmptyGraves());
     }
 
     @Test
     public void findGraveWithBodyWithSqlExceptionThrown() throws SQLException {
-        testExpectedServiceFailureException((m) -> m.findGraveWithBody(b1));
+        testExpectedServiceFailureException((cemeteryManager) -> cemeteryManager.findGraveWithBody(b1));
     }
 
     @Test
     public void findGravesWithSomeFreeSpaceWithSqlExceptionThrown() throws SQLException {
-        testExpectedServiceFailureException((m) -> m.findGravesWithSomeFreeSpace());
+        testExpectedServiceFailureException((cemeteryManager) -> cemeteryManager.findGravesWithSomeFreeSpace());
     }
 
     @Test
     public void findUnburiedBodiesWithSqlExceptionThrown() throws SQLException {
-        testExpectedServiceFailureException((m) -> m.findUnburiedBodies());
+        testExpectedServiceFailureException((cemeteryManager) -> cemeteryManager.findUnburiedBodies());
     }
 
     @Test
     public void putBodyIntoGraveWithSqlExceptionThrown() throws SQLException {
-        testExpectedServiceFailureException((m) -> m.putBodyIntoGrave(b1, g1));
+        testExpectedServiceFailureException((cemeteryManager) -> cemeteryManager.putBodyIntoGrave(b1, g1));
     }
 
     @Test
     public void removeBodyIntoGraveWithSqlExceptionThrown() throws SQLException {
-        testExpectedServiceFailureException((m) -> m.removeBodyFromGrave(b1, g1));
+        testExpectedServiceFailureException((cemeteryManager) -> cemeteryManager.removeBodyFromGrave(b1, g1));
     }
 
 }
