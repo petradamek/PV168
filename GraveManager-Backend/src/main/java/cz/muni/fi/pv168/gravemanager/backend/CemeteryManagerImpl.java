@@ -76,7 +76,7 @@ public class CemeteryManagerImpl implements CemeteryManager {
         try {
             conn = dataSource.getConnection();
             st = conn.prepareStatement(
-                    "SELECT Body.id, name, born, died, vampire " +
+                    "SELECT Body.id, name, gender, born, died, vampire " +
                     "FROM Body JOIN Grave ON Grave.id = Body.graveId " +
                     "WHERE Grave.id = ?");
             st.setLong(1, grave.getId());
@@ -98,7 +98,7 @@ public class CemeteryManagerImpl implements CemeteryManager {
         try {
             conn = dataSource.getConnection();
             st = conn.prepareStatement(
-                    "SELECT id, name, born, died, vampire " +
+                    "SELECT id, name, gender, born, died, vampire " +
                     "FROM Body WHERE graveId IS NULL");
             return BodyManagerImpl.executeQueryForMultipleBodies(st);
         } catch (SQLException ex) {

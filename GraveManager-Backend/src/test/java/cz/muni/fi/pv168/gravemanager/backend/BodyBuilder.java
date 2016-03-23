@@ -12,6 +12,7 @@ public class BodyBuilder {
 
     private Long id;
     private String name;
+    private Gender gender;
     private LocalDate born;
     private LocalDate died;
     private boolean vampire;
@@ -23,6 +24,11 @@ public class BodyBuilder {
 
     public BodyBuilder name(String name) {
         this.name = name;
+        return this;
+    }
+
+    public BodyBuilder gender(Gender gender) {
+        this.gender = gender;
         return this;
     }
 
@@ -60,6 +66,7 @@ public class BodyBuilder {
         Body body = new Body();
         body.setId(id);
         body.setName(name);
+        body.setGender(gender);
         body.setBorn(born);
         body.setDied(died);
         body.setVampire(vampire);

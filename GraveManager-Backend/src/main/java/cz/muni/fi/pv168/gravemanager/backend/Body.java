@@ -14,6 +14,7 @@ public class Body {
 
     private Long id;
     private String name;
+    private Gender gender;
     private LocalDate born;
     private LocalDate died;
     private boolean vampire;
@@ -50,6 +51,14 @@ public class Body {
         this.name = name;
     }
 
+    public Gender getGender() {
+        return gender;
+    }
+
+    public void setGender(Gender gender) {
+        this.gender = gender;
+    }
+
     public boolean isVampire() {
         return vampire;
     }
@@ -63,6 +72,7 @@ public class Body {
         return "Body{"
                 + "id=" + id
                 + ", name=" + name
+                + ", gender=" + gender
                 + ", born=" + born
                 + ", died=" + died
                 + ", vampire=" + vampire

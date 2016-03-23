@@ -47,7 +47,7 @@ public class BodyManagerImpl implements BodyManager {
         try {
             conn = dataSource.getConnection();
             st = conn.prepareStatement(
-                    "SELECT id, name, born, died, vampire FROM Body");
+                    "SELECT id, name, gender, born, died, vampire FROM Body");
             return executeQueryForMultipleBodies(st);
         } catch (SQLException ex) {
             String msg = "Error when getting all bodies from DB";
@@ -73,18 +73,19 @@ public class BodyManagerImpl implements BodyManager {
             // method DBUtils.closeQuietly(...) 
             conn.setAutoCommit(false);
             st = conn.prepareStatement(
-                    "INSERT INTO Body (name,born,died,vampire) VALUES (?,?,?,?)",
+                    "INSERT INTO Body (name,gender,born,died,vampire) VALUES (?,?,?,?,?)",
                     Statement.RETURN_GENERATED_KEYS);
             st.setString(1, body.getName());
+            st.setString(2, toString(body.getGender()));
 
             // This is the proper way, how to handle LocalDate, however it is not
             // supported by Derby yet - see https://issues.apache.org/jira/browse/DERBY-6445
-            //st.setObject(2, body.getBorn());
-            //st.setObject(3, body.getDied());
+            //st.setObject(3, body.getBorn());
+            //st.setObject(4, body.getDied());
 
-            st.setDate(2, toSqlDate(body.getBorn()));
-            st.setDate(3, toSqlDate(body.getDied()));
-            st.setInt(4, body.isVampire()?1:0);
+            st.setDate(3, toSqlDate(body.getBorn()));
+            st.setDate(4, toSqlDate(body.getDied()));
+            st.setInt(5, body.isVampire()?1:0);
 
             int count = st.executeUpdate();
             DBUtils.checkUpdatesCount(count, body, true);
@@ -116,7 +117,7 @@ public class BodyManagerImpl implements BodyManager {
         try {
             conn = dataSource.getConnection();
             st = conn.prepareStatement(
-                    "SELECT id, name, born, died, vampire FROM Body WHERE id = ?");
+                    "SELECT id, name, gender, born, died, vampire FROM Body WHERE id = ?");
             st.setLong(1, id);
             return executeQueryForSingleBody(st);
         } catch (SQLException ex) {
@@ -144,18 +145,19 @@ public class BodyManagerImpl implements BodyManager {
             // method DBUtils.closeQuietly(...) 
             conn.setAutoCommit(false);            
             st = conn.prepareStatement(
-                    "UPDATE Body SET name = ?, born = ?, died = ?, vampire = ? WHERE id = ?");
+                    "UPDATE Body SET name = ?, gender = ?, born = ?, died = ?, vampire = ? WHERE id = ?");
             st.setString(1, body.getName());
+            st.setString(2, toString(body.getGender()));
 
             // This is the proper way, how to handle LocalDate, however it is not
             // supported by Derby yet - see https://issues.apache.org/jira/browse/DERBY-6445
-            // st.setObject(2, body.getBorn());
-            // st.setObject(3, body.getDied());
+            // st.setObject(3, body.getBorn());
+            // st.setObject(4, body.getDied());
 
-            st.setDate(2, toSqlDate(body.getBorn()));
-            st.setDate(3, toSqlDate(body.getDied()));
-            st.setInt(4, body.isVampire()?1:0);
-            st.setLong(5, body.getId());
+            st.setDate(3, toSqlDate(body.getBorn()));
+            st.setDate(4, toSqlDate(body.getDied()));
+            st.setInt(5, body.isVampire()?1:0);
+            st.setLong(6, body.getId());
 
             int count = st.executeUpdate();
             DBUtils.checkUpdatesCount(count, body, false);
@@ -231,6 +233,7 @@ public class BodyManagerImpl implements BodyManager {
         Body result = new Body();
         result.setId(rs.getLong("id"));
         result.setName(rs.getString("name"));
+        result.setGender(toGender(rs.getString("gender")));
 
         // This is the proper way, how to handle LocalDate, however it is not
         // supported by Derby yet - see https://issues.apache.org/jira/browse/DERBY-6445
@@ -250,11 +253,22 @@ public class BodyManagerImpl implements BodyManager {
         if (body.getName() == null) {
             throw new ValidationException("name is null");
         }
+        if (body.getGender() == null) {
+            throw new ValidationException("gender is null");
+        }
         if (body.getBorn() != null && body.getDied() != null && body.getDied().isBefore(body.getBorn())) {
             throw new ValidationException("died is before born");
         }
     }
     
+    private static Gender toGender(String gender) {
+        return gender == null ? null : Gender.valueOf(gender);
+    }
+
+    private static String toString(Gender gender) {
+        return gender == null ? null : gender.name();
+    }
+
     private static Date toSqlDate(LocalDate localDate) {
         return localDate == null ? null : Date.valueOf(localDate);
     }

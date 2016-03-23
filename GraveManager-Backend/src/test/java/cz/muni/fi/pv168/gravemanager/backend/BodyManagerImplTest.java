@@ -56,14 +56,16 @@ public class BodyManagerImplTest {
     private BodyBuilder sampleJoeBodyBuilder() {
         return new BodyBuilder()
                 .name("Joe from depot")
+                .gender(Gender.MALE)
                 .born(1962,OCTOBER,21)
                 .died(2011,NOVEMBER,8)
                 .vampire(false);
     }
 
-    private BodyBuilder sampleBillyBodyBuilder() {
+    private BodyBuilder sampleCatherineBodyBuilder() {
         return new BodyBuilder()
-                .name("Billy Bob")
+                .name("Catherine")
+                .gender(Gender.FEMALE)
                 .born(1921,FEBRUARY,6)
                 .died(2008,DECEMBER,11)
                 .vampire(true);
@@ -88,14 +90,14 @@ public class BodyManagerImplTest {
         assertThat(manager.findAllBodies()).isEmpty();
 
         Body joe = sampleJoeBodyBuilder().build();
-        Body billy = sampleBillyBodyBuilder().build();
+        Body catherine = sampleCatherineBodyBuilder().build();
 
         manager.createBody(joe);
-        manager.createBody(billy);
+        manager.createBody(catherine);
 
         assertThat(manager.findAllBodies())
                 .usingFieldByFieldElementComparator()
-                .containsOnly(joe,billy);
+                .containsOnly(joe,catherine);
     }
 
     // Test exception with expected parameter of @Test annotation
@@ -122,6 +124,15 @@ public class BodyManagerImplTest {
     public void createBodyWithNullName() {
         Body body = sampleJoeBodyBuilder()
                 .name(null)
+                .build();
+        assertThatThrownBy(() -> manager.createBody(body))
+                .isInstanceOf(ValidationException.class);
+    }
+
+    @Test
+    public void createBodyWithNullGender() {
+        Body body = sampleJoeBodyBuilder()
+                .gender(null)
                 .build();
         assertThatThrownBy(() -> manager.createBody(body))
                 .isInstanceOf(ValidationException.class);
@@ -177,9 +188,9 @@ public class BodyManagerImplTest {
 
     private void updateBody(Consumer<Body> updateOperation) {
         Body joe = sampleJoeBodyBuilder().build();
-        Body billy = sampleBillyBodyBuilder().build();
+        Body catherine = sampleCatherineBodyBuilder().build();
         manager.createBody(joe);
-        manager.createBody(billy);
+        manager.createBody(catherine);
 
         updateOperation.accept(joe);
 
@@ -187,13 +198,18 @@ public class BodyManagerImplTest {
         assertThat(manager.getBody(joe.getId()))
                 .isEqualToComparingFieldByField(joe);
         // Check if updates didn't affected other records
-        assertThat(manager.getBody(billy.getId()))
-                .isEqualToComparingFieldByField(billy);
+        assertThat(manager.getBody(catherine.getId()))
+                .isEqualToComparingFieldByField(catherine);
     }
 
     @Test
     public void updateBodyName() {
         updateBody((b) -> b.setName("Pepik"));
+    }
+
+    @Test
+    public void updateGender() {
+        updateBody((b) -> b.setGender(Gender.FEMALE));
     }
 
     @Test
@@ -241,6 +257,16 @@ public class BodyManagerImplTest {
     }
 
     @Test
+    public void updateBodyWithNullGender() {
+        Body body = sampleJoeBodyBuilder().build();
+        manager.createBody(body);
+        body.setGender(null);
+
+        expectedException.expect(ValidationException.class);
+        manager.updateBody(body);
+    }
+
+    @Test
     public void updateBodyWithBornAfterDied() {
         Body body = sampleJoeBodyBuilder().born(1962,OCTOBER,21).died(2011,NOVEMBER,8).build();
         manager.createBody(body);
@@ -254,17 +280,17 @@ public class BodyManagerImplTest {
     public void deleteBody() {
 
         Body joe = sampleJoeBodyBuilder().build();
-        Body billy = sampleBillyBodyBuilder().build();
+        Body catherine = sampleCatherineBodyBuilder().build();
         manager.createBody(joe);
-        manager.createBody(billy);
+        manager.createBody(catherine);
 
         assertThat(manager.getBody(joe.getId())).isNotNull();
-        assertThat(manager.getBody(billy.getId())).isNotNull();
+        assertThat(manager.getBody(catherine.getId())).isNotNull();
 
         manager.deleteBody(joe);
 
         assertThat(manager.getBody(joe.getId())).isNull();
-        assertThat(manager.getBody(billy.getId())).isNotNull();
+        assertThat(manager.getBody(catherine.getId())).isNotNull();
 
     }
 

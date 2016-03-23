@@ -48,11 +48,11 @@ public class CemeteryManagerImplTest {
         g2 = new GraveBuilder().column(8).row(9).capacity(2).note("Grave 2").build();
         g3 = new GraveBuilder().column(2).row(2).capacity(3).note("Grave 3").build();
 
-        b1 = new BodyBuilder().name("Body 1").build();
-        b2 = new BodyBuilder().name("Body 2").build();
-        b3 = new BodyBuilder().name("Body 3").build();
-        b4 = new BodyBuilder().name("Body 4").build();
-        b5 = new BodyBuilder().name("Body 5").build();
+        b1 = new BodyBuilder().name("Body 1").gender(Gender.MALE).build();
+        b2 = new BodyBuilder().name("Body 2").gender(Gender.MALE).build();
+        b3 = new BodyBuilder().name("Body 3").gender(Gender.MALE).build();
+        b4 = new BodyBuilder().name("Body 4").gender(Gender.MALE).build();
+        b5 = new BodyBuilder().name("Body 5").gender(Gender.MALE).build();
 
         bodyManager.createBody(b1);
         bodyManager.createBody(b2);
@@ -68,8 +68,8 @@ public class CemeteryManagerImplTest {
         graveNotInDB = new GraveBuilder().id(g3.getId() + 100).build();
         assertThat(graveManager.getGrave(graveNotInDB.getId())).isNull();
 
-        bodyWithNullId = new BodyBuilder().name("Body with null id").id(null).build();
-        bodyNotInDB = new BodyBuilder().name("Body not in DB").id(b5.getId() + 100).build();
+        bodyWithNullId = new BodyBuilder().name("Body with null id").gender(Gender.MALE).id(null).build();
+        bodyNotInDB = new BodyBuilder().name("Body not in DB").gender(Gender.MALE).id(b5.getId() + 100).build();
         assertThat(bodyManager.getBody(bodyNotInDB.getId())).isNull();
     }
 
