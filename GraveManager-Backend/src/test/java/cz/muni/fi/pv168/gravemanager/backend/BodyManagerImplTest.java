@@ -5,7 +5,11 @@ import cz.muni.fi.pv168.common.IllegalEntityException;
 import cz.muni.fi.pv168.common.ServiceFailureException;
 import cz.muni.fi.pv168.common.ValidationException;
 import java.sql.SQLException;
+import java.time.Clock;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.function.Consumer;
 import javax.sql.DataSource;
 import org.apache.derby.jdbc.EmbeddedDataSource;
@@ -28,6 +32,11 @@ public class BodyManagerImplTest {
     private BodyManagerImpl manager;
     private DataSource ds;
 
+    // Our Clock mock object will be allways returning date and time
+    // corresponding to February 29 2016, 14:00 in UTC.
+    private final static ZonedDateTime NOW
+            = LocalDateTime.of(2016, FEBRUARY, 29, 14, 00).atZone(ZoneId.of("UTC"));
+
     @Rule
     // attribute annotated with @Rule annotation must be public :-(
     public ExpectedException expectedException = ExpectedException.none();
@@ -40,11 +49,17 @@ public class BodyManagerImplTest {
         return ds;
     }
 
+    private static Clock prepareClockMock(ZonedDateTime now) {
+        // We don't need to use Mockito, because java already contais
+        // implementation of Clock which returns fixed time.
+        return Clock.fixed(now.toInstant(), now.getZone());
+    }
+
     @Before
     public void setUp() throws SQLException {
         ds = prepareDataSource();
         DBUtils.executeSqlScript(ds,GraveManager.class.getResource("createTables.sql"));
-        manager = new BodyManagerImpl();
+        manager = new BodyManagerImpl(prepareClockMock(NOW));
         manager.setDataSource(ds);
     }
 
@@ -156,6 +171,54 @@ public class BodyManagerImplTest {
         Body body = sampleJoeBodyBuilder()
                 .born(1962,OCTOBER,21)
                 .died(1962,OCTOBER,21)
+                .build();
+        manager.createBody(body);
+
+        assertThat(manager.getBody(body.getId()))
+                .isNotNull()
+                .isEqualToComparingFieldByField(body);
+    }
+
+    @Test
+    public void createBodyWithBornTomorrow() {
+        LocalDate tomorrow = NOW.toLocalDate().plusDays(1);
+        Body body = sampleJoeBodyBuilder()
+                .born(tomorrow)
+                .died(null)
+                .build();
+        assertThatThrownBy(() -> manager.createBody(body))
+                .isInstanceOf(ValidationException.class);
+    }
+
+    @Test
+    public void createBodyWithBornToday() {
+        LocalDate today = NOW.toLocalDate();
+        Body body = sampleJoeBodyBuilder()
+                .born(today)
+                .died(null)
+                .build();
+        manager.createBody(body);
+
+        assertThat(manager.getBody(body.getId()))
+                .isNotNull()
+                .isEqualToComparingFieldByField(body);
+    }
+
+    @Test
+    public void createBodyWithDiedTomorrow() {
+        LocalDate tomorrow = NOW.toLocalDate().plusDays(1);
+        Body body = sampleJoeBodyBuilder()
+                .died(tomorrow)
+                .build();
+        assertThatThrownBy(() -> manager.createBody(body))
+                .isInstanceOf(ValidationException.class);
+    }
+
+    @Test
+    public void createBodyWithDiedToday() {
+        LocalDate today = NOW.toLocalDate();
+        Body body = sampleJoeBodyBuilder()
+                .died(today)
                 .build();
         manager.createBody(body);
 

@@ -10,6 +10,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +29,11 @@ public class BodyManagerImpl implements BodyManager {
             BodyManagerImpl.class.getName());    
     
     private DataSource dataSource;
+    private final Clock clock;
+
+    public BodyManagerImpl(Clock clock) {
+        this.clock = clock;
+    }
 
     public void setDataSource(DataSource dataSource) {
         this.dataSource = dataSource;
@@ -246,7 +252,7 @@ public class BodyManagerImpl implements BodyManager {
         return result;
     }
 
-    static private void validate(Body body) {        
+    private void validate(Body body) {
         if (body == null) {
             throw new IllegalArgumentException("grave is null");
         }
@@ -258,6 +264,13 @@ public class BodyManagerImpl implements BodyManager {
         }
         if (body.getBorn() != null && body.getDied() != null && body.getDied().isBefore(body.getBorn())) {
             throw new ValidationException("died is before born");
+        }
+        LocalDate today = LocalDate.now(clock);
+        if (body.getBorn() != null && body.getBorn().isAfter(today)) {
+            throw new ValidationException("born is in future");
+        }
+        if (body.getDied() != null && body.getDied().isAfter(today)) {
+            throw new ValidationException("died is in future");
         }
     }
     

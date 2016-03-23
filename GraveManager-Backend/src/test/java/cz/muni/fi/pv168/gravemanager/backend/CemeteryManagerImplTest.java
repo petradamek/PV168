@@ -4,6 +4,11 @@ import cz.muni.fi.pv168.common.DBUtils;
 import cz.muni.fi.pv168.common.IllegalEntityException;
 import cz.muni.fi.pv168.common.ServiceFailureException;
 import java.sql.SQLException;
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.time.Month;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.function.Consumer;
 import javax.sql.DataSource;
 import org.apache.derby.jdbc.EmbeddedDataSource;
@@ -26,6 +31,9 @@ public class CemeteryManagerImplTest {
     private BodyManagerImpl bodyManager;
     private GraveManagerImpl graveManager;
     private DataSource ds;
+
+    private final static ZonedDateTime NOW
+            = LocalDateTime.of(2016, Month.FEBRUARY, 29, 14, 00).atZone(ZoneId.of("UTC"));
 
     @Rule
     // attribute annotated with @Rule annotation must be public :-(
@@ -79,7 +87,7 @@ public class CemeteryManagerImplTest {
         DBUtils.executeSqlScript(ds, GraveManager.class.getResource("createTables.sql"));
         manager = new CemeteryManagerImpl();
         manager.setDataSource(ds);
-        bodyManager = new BodyManagerImpl();
+        bodyManager = new BodyManagerImpl(Clock.fixed(NOW.toInstant(), NOW.getZone()));
         bodyManager.setDataSource(ds);
         graveManager = new GraveManagerImpl();
         graveManager.setDataSource(ds);
