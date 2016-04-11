@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <!--
+
+    Run the following command to compile and run:
+
+        mvn install; cd books-web; mvn tomcat7-run
+
+    then visit the URL http://localhost:8080/books-web/
+
+    -->
+
+    <groupId>cz.muni.fi.pv168</groupId>
+    <artifactId>books-app</artifactId>
+    <version>1.3-SNAPSHOT</version>
+    <name>Books parent project</name>
+    <packaging>pom</packaging>
+
+    <!-- define child projects -->
+    <modules>
+     <module>books-jdbc</module>
+     <module>books-web</module>
+    </modules>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <!-- defines mutually compatible versions of many libraries -->
+    <!-- see http://docs.spring.io/platform/docs/current/reference/htmlsingle/#getting-started-using-spring-io-platform-maven -->
+    <parent>
+        <groupId>io.spring.platform</groupId>
+        <artifactId>platform-bom</artifactId>
+        <version>2.0.3.RELEASE</version>
+        <relativePath/>
+    </parent>
+
+    <build>
+        <!-- plugin versions inherited by child modules -->
+        <pluginManagement>
+            <plugins>
+                <!-- Java version is 8 -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <configuration>
+                        <source>8</source>
+                        <target>8</target>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+
+</project>

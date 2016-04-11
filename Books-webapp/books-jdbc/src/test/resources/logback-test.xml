@@ -1,0 +1,13 @@
+<configuration>
+    <appender name="APP" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+    <logger name="cz.muni.fi.pv168.books" level="info"/>
+    <logger name="org.springframework" level="warn"/>
+    <logger name="org.springframework.jdbc.core.metadata.TableMetaDataProvider" level="error"/>
+    <root level="warn">
+        <appender-ref ref="APP"/>
+    </root>
+</configuration>
