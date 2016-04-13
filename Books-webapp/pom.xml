@@ -29,7 +29,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
-    <!-- defines mutually compatible versions of many libraries -->
+    <!-- inherits definitions of mutually compatible versions of many libraries -->
     <!-- see http://docs.spring.io/platform/docs/current/reference/htmlsingle/#getting-started-using-spring-io-platform-maven -->
     <parent>
         <groupId>io.spring.platform</groupId>
@@ -55,5 +55,30 @@
         </pluginManagement>
     </build>
 
+    <!-- just optional metadata about the project -->
+    <description>Example for PV168 course at Masaryk University</description>
+    <developers>
+        <developer>
+            <name>Martin Kuba</name>
+            <email>makub@ics.muni.cz</email>
+            <url>http://www.muni.cz/people/3988</url>
+            <organization>Masaryk University</organization>
+            <organizationUrl>http://www.muni.cz</organizationUrl>
+        </developer>
+    </developers>
+    <organization>
+        <name>Masaryk University</name>
+        <url>http://www.muni.cz</url>
+    </organization>
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+        </license>
+    </licenses>
+    <scm>
+        <connection>scm:git:https://github.com/petradamek/PV168.git</connection>
+        <url>https://github.com/petradamek/PV168/tree/master/Books-webapp</url>
+    </scm>
 
 </project>

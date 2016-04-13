@@ -21,9 +21,6 @@
     </properties>
 
     <build>
-        <!-- the name of the final WAR file -->
-        <finalName>books</finalName>
-
         <!-- what to do when only "mvn" is run -->
         <defaultGoal>tomcat7:run</defaultGoal>
 
