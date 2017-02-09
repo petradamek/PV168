@@ -7,7 +7,7 @@
 
     Run the following command to compile and run:
 
-        mvn install; cd books-web; mvn tomcat7-run
+        mvn install; cd books-web; mvn tomcat7:run
 
     then visit the URL http://localhost:8080/books-web/
 
@@ -34,7 +34,7 @@
     <parent>
         <groupId>io.spring.platform</groupId>
         <artifactId>platform-bom</artifactId>
-        <version>2.0.3.RELEASE</version>
+        <version>Athens-SR3</version>
         <relativePath/>
     </parent>
 
