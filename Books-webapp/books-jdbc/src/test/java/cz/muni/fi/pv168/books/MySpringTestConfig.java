@@ -28,6 +28,7 @@ public class MySpringTestConfig {
     public DataSource dataSource() {
         return new EmbeddedDatabaseBuilder()
                 .setType(DERBY)
+                .setScriptEncoding("utf-8")
                 .addScript("classpath:schema-javadb.sql")
                 .addScript("classpath:test-data.sql")
                 .build();
