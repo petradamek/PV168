@@ -10,6 +10,7 @@ import java.util.Objects;
  *
  * @author Petr Adámek
  */
+@SuppressWarnings("WeakerAccess")
 public class Body {
 
     private Long id;
@@ -97,10 +98,7 @@ public class Body {
             return false;
         }
         final Body other = (Body) obj;
-        if (obj != this && this.id == null) {
-            return false;
-        }
-        return Objects.equals(this.id, other.id);
+        return (obj == this || this.id != null) && Objects.equals(this.id, other.id);
     }
 
     @Override

@@ -1,6 +1,8 @@
 package cz.muni.fi.pv168.gravemanager.backend;
 
 import cz.muni.fi.pv168.common.*;
+
+import java.io.IOException;
 import java.sql.SQLException;
 import java.time.*;
 import javax.sql.DataSource;
@@ -51,21 +53,18 @@ public class CemeteryManagerImplTest {
     }
 
     @Before
-    public void setUp() throws SQLException {
+    public void setUp() throws SQLException, IOException {
         ds = prepareDataSource();
-        DBUtils.executeSqlScript(ds, GraveManager.class.getResource("createTables.sql"));
-        manager = new CemeteryManagerImpl();
-        manager.setDataSource(ds);
-        bodyManager = new BodyManagerImpl(Clock.fixed(NOW.toInstant(), NOW.getZone()));
-        bodyManager.setDataSource(ds);
-        graveManager = new GraveManagerImpl();
-        graveManager.setDataSource(ds);
+        DBUtils.executeSqlScript(ds, GraveManager.class.getResourceAsStream("createTables.sql"));
+        manager = new CemeteryManagerImpl(ds);
+        bodyManager = new BodyManagerImpl(ds,Clock.fixed(NOW.toInstant(), NOW.getZone()));
+        graveManager = new GraveManagerImpl(ds);
         prepareTestData();
     }
 
     @After
-    public void tearDown() throws SQLException {
-        DBUtils.executeSqlScript(ds, GraveManager.class.getResource("dropTables.sql"));
+    public void tearDown() throws SQLException, IOException {
+        DBUtils.executeSqlScript(ds, GraveManager.class.getResourceAsStream("dropTables.sql"));
     }
 
     //--------------------------------------------------------------------------
@@ -481,7 +480,7 @@ public class CemeteryManagerImplTest {
         SQLException sqlException = new SQLException();
         DataSource failingDataSource = mock(DataSource.class);
         when(failingDataSource.getConnection()).thenThrow(sqlException);
-        manager.setDataSource(failingDataSource);
+        manager = new CemeteryManagerImpl(failingDataSource);
         assertThatThrownBy(() -> operation.callOn(manager))
                 .isInstanceOf(ServiceFailureException.class)
                 .hasCause(sqlException);

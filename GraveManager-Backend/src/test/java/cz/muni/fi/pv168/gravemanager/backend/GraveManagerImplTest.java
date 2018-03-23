@@ -1,6 +1,8 @@
 package cz.muni.fi.pv168.gravemanager.backend;
 
 import cz.muni.fi.pv168.common.*;
+
+import java.io.IOException;
 import java.sql.SQLException;
 import javax.sql.DataSource;
 import org.apache.derby.jdbc.EmbeddedDataSource;
@@ -47,17 +49,16 @@ public class GraveManagerImplTest {
     }
 
     @Before
-    public void setUp() throws SQLException {
+    public void setUp() throws SQLException, IOException {
         ds = prepareDataSource();
-        DBUtils.executeSqlScript(ds,GraveManager.class.getResource("createTables.sql"));
-        manager = new GraveManagerImpl();
-        manager.setDataSource(ds);
+        DBUtils.executeSqlScript(ds,GraveManager.class.getResourceAsStream("createTables.sql"));
+        manager = new GraveManagerImpl(ds);
     }
 
     @After
-    public void tearDown() throws SQLException {
+    public void tearDown() throws SQLException, IOException {
         // Drop tables after each test
-        DBUtils.executeSqlScript(ds,GraveManager.class.getResource("dropTables.sql"));
+        DBUtils.executeSqlScript(ds,GraveManager.class.getResourceAsStream("dropTables.sql"));
     }
 
     //--------------------------------------------------------------------------
@@ -440,7 +441,7 @@ public class GraveManagerImplTest {
         // DataSource.getConnection() method is called.
         when(failingDataSource.getConnection()).thenThrow(sqlException);
         // Configure our manager to use DataSource mock object
-        manager.setDataSource(failingDataSource);
+        manager = new GraveManagerImpl(failingDataSource);
 
         // Create Grave instance for our test
         Grave grave = sampleSmallGraveBuilder().build();
@@ -462,7 +463,7 @@ public class GraveManagerImplTest {
         SQLException sqlException = new SQLException();
         DataSource failingDataSource = mock(DataSource.class);
         when(failingDataSource.getConnection()).thenThrow(sqlException);
-        manager.setDataSource(failingDataSource);
+        manager = new GraveManagerImpl(failingDataSource);
         assertThatThrownBy(() -> operation.callOn(manager))
                 .isInstanceOf(ServiceFailureException.class)
                 .hasCause(sqlException);

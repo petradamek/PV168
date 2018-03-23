@@ -1,6 +1,8 @@
 package cz.muni.fi.pv168.gravemanager.backend;
 
 import cz.muni.fi.pv168.common.*;
+
+import java.io.IOException;
 import java.sql.SQLException;
 import java.time.*;
 import javax.sql.DataSource;
@@ -60,16 +62,15 @@ public class BodyManagerImplTest {
     }
 
     @Before
-    public void setUp() throws SQLException {
+    public void setUp() throws SQLException, IOException {
         ds = prepareDataSource();
-        DBUtils.executeSqlScript(ds,GraveManager.class.getResource("createTables.sql"));
-        manager = new BodyManagerImpl(prepareClockMock(NOW));
-        manager.setDataSource(ds);
+        DBUtils.executeSqlScript(ds,GraveManager.class.getResourceAsStream("createTables.sql"));
+        manager = new BodyManagerImpl(ds, prepareClockMock(NOW));
     }
 
     @After
-    public void tearDown() throws SQLException {
-        DBUtils.executeSqlScript(ds,GraveManager.class.getResource("dropTables.sql"));
+    public void tearDown() throws SQLException, IOException {
+        DBUtils.executeSqlScript(ds,GraveManager.class.getResourceAsStream("dropTables.sql"));
     }
 
     //--------------------------------------------------------------------------
@@ -508,7 +509,7 @@ public class BodyManagerImplTest {
         // DataSource.getConnection() method is called.
         when(failingDataSource.getConnection()).thenThrow(sqlException);
         // Configure our manager to use DataSource mock object
-        manager.setDataSource(failingDataSource);
+        manager = new BodyManagerImpl(failingDataSource, prepareClockMock(NOW));
 
         // Create Body instance for our test
         Body body = sampleJoeBodyBuilder().build();
@@ -530,7 +531,7 @@ public class BodyManagerImplTest {
         SQLException sqlException = new SQLException();
         DataSource failingDataSource = mock(DataSource.class);
         when(failingDataSource.getConnection()).thenThrow(sqlException);
-        manager.setDataSource(failingDataSource);
+        manager = new BodyManagerImpl(failingDataSource, prepareClockMock(NOW));
         assertThatThrownBy(() -> operation.callOn(manager))
                 .isInstanceOf(ServiceFailureException.class)
                 .hasCause(sqlException);

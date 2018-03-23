@@ -10,6 +10,7 @@ import java.util.Objects;
  *
  * @author Petr Adámek
  */
+@SuppressWarnings("WeakerAccess")
 public class Grave {
 
     private Long id;
@@ -87,10 +88,7 @@ public class Grave {
             return false;
         }
         final Grave other = (Grave) obj;
-        if (obj != this && this.id == null) {
-            return false;
-        }
-        return Objects.equals(this.id, other.id);
+        return (obj == this || this.id != null) && Objects.equals(this.id, other.id);
     }
 
     @Override
