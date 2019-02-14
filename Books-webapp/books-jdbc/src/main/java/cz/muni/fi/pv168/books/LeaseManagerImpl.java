@@ -16,7 +16,7 @@ import java.util.Map;
 
 public class LeaseManagerImpl implements LeaseManager {
 
-    final static Logger log = LoggerFactory.getLogger(LeaseManagerImpl.class);
+    private final static Logger log = LoggerFactory.getLogger(LeaseManagerImpl.class);
 
     private JdbcTemplate jdbc;
     private BookManager bookManager;

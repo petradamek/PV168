@@ -6,9 +6,9 @@
 
     <!-- inherit groupId, version, plugins, properties and many other things from the parent project -->
     <parent>
-       <groupId>cz.muni.fi.pv168</groupId>
-       <artifactId>books-app</artifactId>
-       <version>1.3-SNAPSHOT</version>
+        <groupId>cz.muni.fi.pv168</groupId>
+        <artifactId>books-app</artifactId>
+        <version>1.4-SNAPSHOT</version>
     </parent>
 
     <!-- this module identification -->
@@ -19,27 +19,6 @@
     <properties>
         <netbeans.hint.deploy.server>Tomcat</netbeans.hint.deploy.server>
     </properties>
-
-    <build>
-        <!-- what to do when only "mvn" is run -->
-        <defaultGoal>tomcat7:run</defaultGoal>
-
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <configuration>
-                    <failOnMissingWebXml>false</failOnMissingWebXml>
-                </configuration>
-            </plugin>
-            <!--  embedded tomcat -->
-            <plugin>
-                <groupId>org.apache.tomcat.maven</groupId>
-                <artifactId>tomcat7-maven-plugin</artifactId>
-                <version>2.2</version>
-            </plugin>
-        </plugins>
-    </build>
 
     <!-- needed libraries; their versions are specified using properties inherited from the parent project -->
     <dependencies>
@@ -70,4 +49,44 @@
             <version>${taglibs-standard.version}</version>
         </dependency>
     </dependencies>
+
+    <build>
+        <!-- what to do when only "mvn" is run -->
+        <defaultGoal>cargo:run</defaultGoal>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.2.2</version>
+                <configuration>
+                    <failOnMissingWebXml>false</failOnMissingWebXml>
+                </configuration>
+            </plugin>
+            <!-- embedded Tomcat 9 plugin configuration, use "mvn cargo:run" to run -->
+            <plugin>
+                <groupId>org.codehaus.cargo</groupId>
+                <artifactId>cargo-maven2-plugin</artifactId>
+                <version>1.6.8</version>
+                <configuration>
+                    <container>
+                        <containerId>tomcat9x</containerId>
+                        <artifactInstaller>
+                            <groupId>org.apache.tomcat</groupId>
+                            <artifactId>tomcat</artifactId>
+                            <version>${tomcat.version}</version>
+                        </artifactInstaller>
+                    </container>
+                    <deployables>
+                        <deployable>
+                            <properties>
+                                <context>/books-web</context>
+                            </properties>
+                        </deployable>
+                    </deployables>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
 </project>

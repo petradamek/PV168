@@ -1,4 +1,4 @@
--- my-test-data.sql
+-- test-data.sql
 
 INSERT INTO BOOKS (NAME, AUTHOR) VALUES ('Babička','Božena Němcová');
 

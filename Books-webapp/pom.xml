@@ -7,7 +7,7 @@
 
     Run the following command to compile and run:
 
-        mvn install; cd books-web; mvn tomcat7:run
+        mvn install; cd books-web; mvn cargo:run
 
     then visit the URL http://localhost:8080/books-web/
 
@@ -15,7 +15,7 @@
 
     <groupId>cz.muni.fi.pv168</groupId>
     <artifactId>books-app</artifactId>
-    <version>1.3-SNAPSHOT</version>
+    <version>1.4-SNAPSHOT</version>
     <name>Books parent project</name>
     <packaging>pom</packaging>
 
@@ -26,34 +26,24 @@
     </modules>
 
     <properties>
+        <!-- Use UTF-8 in the whole project -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <!-- define java version used for compilation -->
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+
+        <!-- define versions of libraries in a single place -->
+        <slf4j.version>1.7.25</slf4j.version>
+        <logback.version>1.2.3</logback.version>
+        <junit.version>4.12</junit.version>
+        <derby.version>10.14.2.0</derby.version>
+        <hikaricp.version>3.3.1</hikaricp.version>
+        <spring.version>5.1.4.RELEASE</spring.version>
+        <tomcat.version>9.0.14</tomcat.version>
+        <taglibs-standard.version>1.2.5</taglibs-standard.version>
     </properties>
-
-    <!-- inherits definitions of mutually compatible versions of many libraries -->
-    <!-- see http://docs.spring.io/platform/docs/current/reference/htmlsingle/#getting-started-using-spring-io-platform-maven -->
-    <parent>
-        <groupId>io.spring.platform</groupId>
-        <artifactId>platform-bom</artifactId>
-        <version>Athens-SR3</version>
-        <relativePath/>
-    </parent>
-
-    <build>
-        <!-- plugin versions inherited by child modules -->
-        <pluginManagement>
-            <plugins>
-                <!-- Java version is 8 -->
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-compiler-plugin</artifactId>
-                    <configuration>
-                        <source>8</source>
-                        <target>8</target>
-                    </configuration>
-                </plugin>
-            </plugins>
-        </pluginManagement>
-    </build>
 
     <!-- just optional metadata about the project -->
     <description>Example for PV168 course at Masaryk University</description>

@@ -11,6 +11,7 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
 import javax.sql.DataSource;
+import java.io.IOException;
 
 @WebListener
 public class StartListener implements ServletContextListener {
@@ -21,10 +22,14 @@ public class StartListener implements ServletContextListener {
     public void contextInitialized(ServletContextEvent ev) {
         log.info("webová aplikace inicializována");
         ServletContext servletContext = ev.getServletContext();
-        DataSource dataSource = Main.createMemoryDatabase();
-        servletContext.setAttribute("customerManager", new CustomerManagerImpl(dataSource));
-        servletContext.setAttribute("bookManager", new BookManagerImpl(dataSource));
-        log.info("vytvořeny manažery a uloženy do atributů servletContextu");
+        try {
+            DataSource dataSource = Main.getDataSource();
+            servletContext.setAttribute("customerManager", new CustomerManagerImpl(dataSource));
+            servletContext.setAttribute("bookManager", new BookManagerImpl(dataSource));
+            log.info("vytvořeny manažery a uloženy do atributů servletContextu");
+        } catch (IOException e) {
+            log.error("Nepovedlo se vytvořit databázi", e);
+        }
     }
 
     @Override

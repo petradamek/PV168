@@ -13,7 +13,7 @@ import java.util.List;
 
 public class BookManagerImpl implements BookManager {
 
-    final static Logger log = LoggerFactory.getLogger(BookManagerImpl.class);
+    private final static Logger log = LoggerFactory.getLogger(BookManagerImpl.class);
     private final DataSource dataSource;
 
     public BookManagerImpl(DataSource dataSource) {
