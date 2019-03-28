@@ -21,14 +21,14 @@ public class CustomerManagerImplTest {
     private CustomerManager customerManager;
 
     @Test
-    public void testGetCustomerById() throws Exception {
+    public void testGetCustomerById() {
         Customer c1 = customerManager.getCustomerById(1);
         assertThat(c1, is(notNullValue()));
         assertThat(c1.getFullname(), is(equalTo("Karel Čtvrtý")));
     }
 
     @Test
-    public void testCreateCustomer() throws Exception {
+    public void testCreateCustomer() {
         Customer c2 = new Customer(null, "Jan Novák", "Dlouhá 1", "603123456", "novak@gmail.com");
         customerManager.createCustomer(c2);
         assertThat("customer id", c2.getId(), notNullValue());
@@ -37,7 +37,7 @@ public class CustomerManagerImplTest {
     }
 
     @Test
-    public void testDeleteCustomer() throws Exception {
+    public void testDeleteCustomer() {
         customerManager.deleteCustomer(1);
         try {
             customerManager.getCustomerById(1);
@@ -48,7 +48,7 @@ public class CustomerManagerImplTest {
     }
 
     @Test
-    public void testUpdateCustomer() throws Exception {
+    public void testUpdateCustomer() {
         Customer c1 = customerManager.getCustomerById(1);
         c1.setAddress("Krátká 3");
         c1.setPhone("2222");
@@ -60,7 +60,7 @@ public class CustomerManagerImplTest {
     }
 
     @Test
-    public void testGetAllCustomers() throws Exception {
+    public void testGetAllCustomers() {
         assertThat(customerManager.getAllCustomers(), hasItem(customerManager.getCustomerById(1)));
     }
 }

@@ -15,7 +15,7 @@
 
     <groupId>cz.muni.fi.pv168</groupId>
     <artifactId>books-app</artifactId>
-    <version>1.4-SNAPSHOT</version>
+    <version>1.5-SNAPSHOT</version>
     <name>Books parent project</name>
     <packaging>pom</packaging>
 
@@ -40,8 +40,8 @@
         <junit.version>4.12</junit.version>
         <derby.version>10.14.2.0</derby.version>
         <hikaricp.version>3.3.1</hikaricp.version>
-        <spring.version>5.1.4.RELEASE</spring.version>
-        <tomcat.version>9.0.14</tomcat.version>
+        <spring.version>5.1.5.RELEASE</spring.version>
+        <tomcat.version>9.0.17</tomcat.version>
         <taglibs-standard.version>1.2.5</taglibs-standard.version>
     </properties>
 

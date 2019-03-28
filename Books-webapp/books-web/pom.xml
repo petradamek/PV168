@@ -8,7 +8,7 @@
     <parent>
         <groupId>cz.muni.fi.pv168</groupId>
         <artifactId>books-app</artifactId>
-        <version>1.4-SNAPSHOT</version>
+        <version>1.5-SNAPSHOT</version>
     </parent>
 
     <!-- this module identification -->

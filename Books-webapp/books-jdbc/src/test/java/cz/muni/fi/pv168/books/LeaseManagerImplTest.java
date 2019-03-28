@@ -32,7 +32,7 @@ public class LeaseManagerImplTest {
 
     @Test
     public void testCreateLease() throws Exception {
-        Book book = bookManager.getBookById(1l);
+        Book book = bookManager.getBookById(1L);
         Customer customer = customerManager.getCustomerById(1L);
         Date now = new Date();
         GregorianCalendar gc = new GregorianCalendar(2013, Calendar.DECEMBER, 10);
@@ -42,13 +42,13 @@ public class LeaseManagerImplTest {
     }
 
     @Test
-    public void testGetLeasesForCustomer() throws Exception {
+    public void testGetLeasesForCustomer() {
         List<Lease> leaseList = leaseManager.getLeasesForCustomer(customerManager.getCustomerById(1L));
         assertThat("number of all leases", leaseList.size(), is(1));
     }
 
     @Test
-    public void testAvailableBooks() throws Exception {
+    public void testAvailableBooks() {
         List<Book> availableBooks = leaseManager.getAvailableBooks();
         assertThat(availableBooks.get(0).getId(),equalTo(2L));
     }
