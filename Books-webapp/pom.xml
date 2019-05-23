@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <!--
 
-    Run the following command to compile and run:
+    Run the following command to compile and run web interface:
 
         mvn install; cd books-web; mvn cargo:run
 
@@ -15,14 +15,15 @@
 
     <groupId>cz.muni.fi.pv168</groupId>
     <artifactId>books-app</artifactId>
-    <version>1.5-SNAPSHOT</version>
+    <version>1.6-SNAPSHOT</version>
     <name>Books parent project</name>
     <packaging>pom</packaging>
 
     <!-- define child projects -->
     <modules>
-     <module>books-jdbc</module>
-     <module>books-web</module>
+        <module>books-jdbc</module>
+        <module>books-web</module>
+        <module>books-swing</module>
     </modules>
 
     <properties>
@@ -40,7 +41,7 @@
         <junit.version>4.12</junit.version>
         <derby.version>10.14.2.0</derby.version>
         <hikaricp.version>3.3.1</hikaricp.version>
-        <spring.version>5.1.5.RELEASE</spring.version>
+        <spring.version>5.1.7.RELEASE</spring.version>
         <tomcat.version>9.0.17</tomcat.version>
         <taglibs-standard.version>1.2.5</taglibs-standard.version>
     </properties>

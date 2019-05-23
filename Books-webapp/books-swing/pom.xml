@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- inherit groupId, version, plugins, properties and many other things from the parent project -->
+    <parent>
+        <groupId>cz.muni.fi.pv168</groupId>
+        <artifactId>books-app</artifactId>
+        <version>1.6-SNAPSHOT</version>
+    </parent>
+
+    <!-- this module identification -->
+    <artifactId>books-swing</artifactId>
+    <name>Books swing interface</name>
+    <packaging>jar</packaging>
+
+    <properties>
+        <exec.mainClass>cz.muni.fi.pv168.gui.Main</exec.mainClass>
+    </properties>
+
+    <!-- needed libraries; their versions are specified using properties inherited from the parent project -->
+    <dependencies>
+        <dependency>
+            <groupId>cz.muni.fi.pv168</groupId>
+            <artifactId>books-jdbc</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.adedayo.intellij.sdk</groupId>
+            <artifactId>forms_rt</artifactId>
+            <version>142.1</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <!-- what to do when only "mvn" is run -->
+        <defaultGoal>exec:java</defaultGoal>
+        <plugins>
+        </plugins>
+    </build>
+
+</project>
