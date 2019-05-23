@@ -89,7 +89,7 @@ public class Main {
         //menu Help
         JMenuItem aboutMenuItem = new JMenuItem(texts.getString("menu.about"));
         helpMenu.add(aboutMenuItem);
-        aboutMenuItem.addActionListener(e -> JOptionPane.showMessageDialog(helpMenu, texts.getString("menu.about.text"), texts.getString("menu.about"), JOptionPane.INFORMATION_MESSAGE));
+        aboutMenuItem.addActionListener(e -> JOptionPane.showMessageDialog(frame, texts.getString("menu.about.text"), texts.getString("menu.about"), JOptionPane.INFORMATION_MESSAGE));
         //allows to select the item using Alt-A while in the menu
         aboutMenuItem.setMnemonic('A');
         //adds shortcut CTRL-A to the whole application
@@ -97,7 +97,7 @@ public class Main {
         //menu item for displaying system info
         JMenuItem systemMenuItem = new JMenuItem(texts.getString("menu.system"));
         helpMenu.add(systemMenuItem);
-        systemMenuItem.addActionListener(e -> JOptionPane.showMessageDialog(helpMenu,
+        systemMenuItem.addActionListener(e -> JOptionPane.showMessageDialog(frame,
                 "Locale: " + Locale.getDefault() + "\n"
                         + "JVM: " + System.getProperty("java.vm.name") + " " + System.getProperty("java.version") + "\n"
                         + "OS: " + System.getProperty("os.name") + " " + System.getProperty("os.arch") + " " + System.getProperty("os.version") + "\n"
