@@ -29,7 +29,9 @@ public class Main {
     private final static Logger log = LoggerFactory.getLogger(Main.class);
     static ResourceBundle texts = ResourceBundle.getBundle("MyTexts");
     static CustomerManager customerManager;
+    @SuppressWarnings("WeakerAccess")
     static BookManager bookManager;
+    @SuppressWarnings("WeakerAccess")
     static LeaseManager leaseManager;
     static MainForm mainForm;
     private static JFrame frame;
@@ -93,7 +95,7 @@ public class Main {
         //allows to select the item using Alt-A while in the menu
         aboutMenuItem.setMnemonic('A');
         //adds shortcut CTRL-A to the whole application
-        aboutMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_MASK));
+        aboutMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_DOWN_MASK));
         //menu item for displaying system info
         JMenuItem systemMenuItem = new JMenuItem(texts.getString("menu.system"));
         helpMenu.add(systemMenuItem);
@@ -104,7 +106,7 @@ public class Main {
                         + "CPUs: " + Runtime.getRuntime().availableProcessors(),
                 texts.getString("menu.system"),
                 JOptionPane.INFORMATION_MESSAGE));
-        systemMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_MASK));
+        systemMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_DOWN_MASK));
         return menubar;
     }
 

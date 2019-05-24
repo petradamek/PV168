@@ -123,9 +123,6 @@ public class CustomersForm {
         }
     }
 
-    /**
-     * @noinspection ALL
-     */
     public JComponent $$$getRootComponent$$$() {
         return customersTopPanel;
     }
